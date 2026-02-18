@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "sodl": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "{PATH_TO_SODL}",
+        "sodl-mcp"
+      ],
+      "description": "sodl DSL documentation and compilation tools"
+    }
+  }
+}

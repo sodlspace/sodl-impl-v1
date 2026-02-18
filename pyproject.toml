@@ -1,0 +1,37 @@
+[project]
+name = "sodl-compiler"
+version = "0.1.0"
+description = "Compiler for the SODL DSL - A specification-driven development tool"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [
+    {name = "SODL Team"},
+]
+license = {text = "MIT"}
+dependencies = [
+    "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
+    "jinja2>=3.1.3",
+    "python-multipart>=0.0.9",
+    "pydantic>=2.6.0",
+    "pytest>=8.0.0",
+    "httpx>=0.26.0",
+    "requests>=2.31.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "httpx>=0.26.0"
+]
+
+[project.scripts]
+sodlcompiler = "sodlcompiler.__main__:main"
+
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["sodlcompiler*"]

@@ -1,0 +1,336 @@
+system "ACEStepWebUI":
+  version = "1.5.0"
+  stack:
+    language = "Python 3.11"
+    web = "Flask 2.3.0+"
+    templating = "Jinja2 3.1.0+"
+    ml_framework = "PyTorch"
+    audio_processing = "librosa, soundfile, pydub, scipy"
+    noise_reduction = "noisereduce 3.0.0+"
+    configuration = "python-dotenv"
+    logging = "loguru"
+    system_monitoring = "psutil"
+  
+  intent:
+    primary = "Provide a web-based UI for ACE-Step music generation system"
+    outcomes = [
+      "Initialize and configure ACE-Step DiT and LLM models",
+      "Generate music from text descriptions (text2music)",
+      "Generate music with lyrics",
+      "Continue existing audio tracks",
+      "Repaint/remix audio with new characteristics",
+      "Create audio covers with style transfer",
+      "Transcribe audio codes to musical metadata",
+      "Generate random music examples",
+      "Apply audio mastering and noise reduction",
+      "Monitor system memory and VRAM usage",
+      "Serve generated audio files",
+      "Handle file uploads for audio processing"
+    ]
+    out_of_scope = [
+      "User authentication and authorization",
+      "Multi-user session management",
+      "Payment processing",
+      "Cloud storage integration",
+      "Mobile app interface"
+    ]
+
+  # Core service interfaces
+  interface ModelInitializer:
+    doc = "Handles initialization of ACE-Step DiT and LLM models"
+    method initialize_dit(checkpoint: str, config_path: str, device: str) -> str
+    method initialize_llm(checkpoint_dir: str, lm_model_path: str, backend: str) -> str
+    method get_available_checkpoints() -> str
+    method get_available_models() -> str
+    method get_available_lm_models() -> str
+    invariants:
+      invariant "DiT model must be initialized before generation"
+      invariant "LLM initialization is optional but required for text-based features"
+      invariant "Model paths must exist and be valid"
+
+  interface MusicGenerator:
+    doc = "Handles music generation with various task types"
+    method generate_music(params: str, gen_config: str, save_dir: str) -> str
+    method validate_parameters(params: str) -> bool
+    method create_output_directory(timestamp: str) -> str
+    invariants:
+      invariant "Task type must be one of: text2music, lyrics2music, audiocontinuation, audiorepaint, audiocover"
+      invariant "Inference steps must be positive integer"
+      invariant "Guidance scale must be non-negative float"
+      invariant "Duration must be positive or -1 for auto"
+      invariant "Batch size must be positive integer"
+
+  interface LyricProcessor:
+    doc = "Handles lyrics and caption processing using LLM"
+    method transcribe_audio_codes(audio_codes: str) -> str
+    method create_sample(query: str, instrumental: bool, vocal_language: str) -> str
+    method format_sample(caption: str, lyrics: str, user_metadata: str) -> str
+    method generate_random_example(task_type: str) -> str
+    invariants:
+      invariant "LLM must be initialized before processing"
+      invariant "Vocal language must be from valid language list"
+      invariant "Temperature must be in range (0, inf)"
+      invariant "top_p must be in range (0, 1]"
+
+  interface AudioProcessor:
+    doc = "Handles audio file processing and mastering"
+    method remaster_audio(input_path: str, output_path: str, intensity: float) -> str
+    method serve_audio_file(filename: str) -> str
+    method handle_file_upload(file: str) -> str
+    invariants:
+      invariant "Input audio file must exist"
+      invariant "Noise reduction intensity must be in range [0.0, 1.0]"
+      invariant "Output format must be one of: mp3, wav, flac, m4a"
+
+  interface SystemMonitor:
+    doc = "Monitors system resources and memory usage"
+    method get_memory_usage() -> str
+    method get_service_status() -> str
+    method get_gpu_config() -> str
+    invariants:
+      invariant "Memory metrics always return valid numbers"
+      invariant "VRAM metrics return 0 when CUDA unavailable"
+
+  # Implementation modules
+  module FlaskWebServer:
+    implements = [ModelInitializer, MusicGenerator, LyricProcessor, AudioProcessor, SystemMonitor]
+    exports = [ModelInitializer, MusicGenerator, LyricProcessor, AudioProcessor, SystemMonitor]
+    requires = []
+    config:
+      max_content_length = "100MB"
+      host = "127.0.0.1"
+      port = "5000"
+      debug = "true"
+    invariants:
+      invariant "Flask app runs in single-threaded mode for model safety"
+      invariant "Global handlers maintain state across requests"
+      invariant "File uploads are validated before processing"
+    artifacts = ["web_ui/app.py"]
+
+  module WebUITemplates:
+    owns = ["HTML templates for web interface"]
+    requires = [ModelInitializer, MusicGenerator, LyricProcessor]
+    invariants:
+      invariant "Templates use Jinja2 syntax"
+      invariant "All form inputs have proper validation"
+      invariant "Audio player components are responsive"
+    artifacts = ["web_ui/templates/"]
+
+  module StaticAssets:
+    owns = ["CSS, JavaScript, and static resources"]
+    invariants:
+      invariant "CSS provides modern, responsive design"
+      invariant "JavaScript handles real-time progress updates"
+      invariant "Audio playback controls work across browsers"
+    artifacts = ["web_ui/static/"]
+
+  # REST API Module
+  module RestAPI:
+    owns = ["RESTful API endpoints for music generation"]
+    requires = [ModelInitializer, MusicGenerator, LyricProcessor, AudioProcessor, SystemMonitor]
+    api:
+      model GenerationParams:
+        field task_type: str
+        field caption: str
+        field lyrics: str
+        field instrumental: bool
+        field vocal_language: str
+        field bpm: int
+        field keyscale: str
+        field timesignature: str
+        field duration: float
+        field inference_steps: int
+        field guidance_scale: float
+        field seed: int
+        field use_adg: bool
+        field shift: float
+        field infer_method: str
+        field thinking: bool
+        field lm_temperature: float
+        field lm_cfg_scale: float
+        field lm_top_k: int
+        field lm_top_p: float
+        field use_cot_metas: bool
+        field use_cot_caption: bool
+        field use_cot_language: bool
+        field reference_audio: str
+        field src_audio: str
+        field repainting_start: float
+        field repainting_end: float
+        field audio_cover_strength: float
+      
+      model GenerationConfig:
+        field batch_size: int
+        field use_random_seed: bool
+        field audio_format: str
+        field lm_batch_chunk_size: int
+        field apply_noise_reduction: bool
+        field noise_reduction_intensity: float
+      
+      model GenerationResult:
+        field success: bool
+        field status_message: str
+        field audios: str
+        field extra_outputs: str
+        field error: str
+      
+      model AudioMetadata:
+        field path: str
+        field seed: int
+        field caption: str
+        field lyrics: str
+        field bpm: int
+        field duration: float
+        field keyscale: str
+        field timesignature: str
+        field vocal_language: str
+        field inference_steps: int
+        field guidance_scale: float
+        field shift: float
+        field use_adg: bool
+        field lm_temperature: float
+        field lm_cfg_scale: float
+      
+      model MemoryInfo:
+        field ram_used_gb: float
+        field ram_used_mb: float
+        field ram_total_gb: float
+        field ram_percent: float
+        field vram_used_gb: float
+        field vram_used_mb: float
+        field vram_total_gb: float
+        field vram_percent: float
+      
+      model ServiceStatus:
+        field service_initialized: bool
+        field lm_initialized: bool
+        field memory_usage: str
+      
+      endpoint "GET /" -> HTML
+      endpoint "POST /api/init" -> JSON
+      endpoint "POST /api/generate" -> JSON
+      endpoint "GET /api/checkpoints" -> JSON
+      endpoint "GET /api/config" -> JSON
+      endpoint "GET /api/status" -> JSON
+      endpoint "POST /api/transcribe" -> JSON
+      endpoint "POST /api/create_sample" -> JSON
+      endpoint "POST /api/format" -> JSON
+      endpoint "POST /api/sample_random" -> JSON
+      endpoint "POST /api/upload" -> JSON
+      endpoint "POST /api/remaster" -> JSON
+      endpoint "GET /audio/<path>" -> AudioFile
+    
+    invariants:
+      invariant "All API responses use consistent JSON structure"
+      invariant "Error responses include status='error' and message field"
+      invariant "Success responses include status='success'"
+      invariant "POST endpoints validate input data"
+      invariant "File serving validates file existence and type"
+    
+    acceptance:
+      test "initialize service with valid parameters"
+      test "generate music with text2music task"
+      test "generate music with lyrics"
+      test "handle missing model initialization gracefully"
+      test "transcribe audio codes with LLM"
+      test "create random music samples"
+      test "format caption and lyrics"
+      test "remaster audio with noise reduction"
+      test "serve audio files from outputs directory"
+      test "upload audio files successfully"
+      test "get system status and memory usage"
+      test "get available checkpoints and models"
+      test "handle errors with proper status codes"
+    
+    artifacts = ["web_ui/app.py"]
+
+  # Integration with ACE-Step
+  module AceStepIntegration:
+    owns = ["Integration layer with ACE-Step core library"]
+    requires = []
+    invariants:
+      invariant "ACE-Step handlers are initialized globally"
+      invariant "GPU configuration is loaded at startup"
+      invariant "Model checkpoints are validated before loading"
+      invariant "Imports acestep.handler, acestep.llm_inference, acestep.gpu_config"
+      invariant "Imports acestep.constants and acestep.inference modules"
+      invariant "Imports acestep.mastering for audio processing"
+    artifacts = ["web_ui/app.py"]
+
+  # Configuration and Constants
+  module Configuration:
+    owns = ["System configuration and constants"]
+    config:
+      max_file_upload_size = "100MB"
+      default_output_directory = "outputs"
+      default_upload_directory = "web_ui/uploads"
+    invariants:
+      invariant "Output directories are created if they don't exist"
+      invariant "Upload directory is writable"
+      invariant "Supports 50+ languages including en, es, fr, de, ja, zh, etc"
+      invariant "Supports audio formats: mp3, wav, flac, m4a"
+    artifacts = ["web_ui/app.py"]
+
+  # Dependency Requirements
+  module DependencyManagement:
+    owns = ["Python package dependencies and requirements"]
+    invariants:
+      invariant "All dependencies are compatible with Python 3.11"
+      invariant "PyTorch version matches acestep requirements"
+      invariant "gradio is explicitly excluded from web_ui dependencies"
+      invariant "Web framework: flask>=2.3.0, jinja2>=3.1.0"
+      invariant "ML and audio: torch, numpy, soundfile, librosa, pydub, scipy"
+      invariant "Audio processing: noisereduce>=3.0.0"
+      invariant "Utilities: python-dotenv, loguru, psutil"
+      invariant "Internal dependency: acestep"
+    artifacts = ["web_ui/requirements.txt"]
+
+  # Deployment pipeline
+  pipeline "Development":
+    step Setup:
+      output = "environment"
+      require = "Install all dependencies from requirements.txt"
+      gate = "All packages installed successfully"
+    
+    step Configure:
+      modules = ["Configuration", "AceStepIntegration"]
+      output = "configuration"
+      require = "Set up GPU configuration and model paths"
+      gate = "GPU config loaded, model paths validated"
+    
+    step Implement:
+      modules = ["FlaskWebServer", "RestAPI", "WebUITemplates", "StaticAssets"]
+      output = "code"
+      gate = "All modules implemented and tested"
+    
+    step Test:
+      output = "test_results"
+      require = "Run integration tests for all API endpoints"
+      gate = "All acceptance tests pass"
+    
+    step Deploy:
+      output = "deployment"
+      require = "Start Flask server on localhost:5000"
+      gate = "Web UI accessible at http://localhost:5000"
+
+  pipeline "Production":
+    step Setup:
+      output = "environment"
+      require = "Install production dependencies with pinned versions"
+      gate = "All packages installed with correct versions"
+    
+    step Configure:
+      modules = ["Configuration"]
+      output = "configuration"
+      require = "Configure production settings"
+      gate = "Production configuration validated"
+    
+    step Build:
+      modules = ["FlaskWebServer", "RestAPI", "WebUITemplates", "StaticAssets"]
+      output = "code"
+      gate = "Production build complete"
+    
+    step Deploy:
+      output = "deployment"
+      require = "Deploy with production WSGI server"
+      gate = "Service running with proper resource limits and monitoring"

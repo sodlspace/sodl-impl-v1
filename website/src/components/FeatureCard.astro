@@ -1,0 +1,32 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  icon: string;
+}
+
+const { title, description, icon } = Astro.props;
+---
+
+<article
+  class="group relative rounded-xl border border-indigo-500/20 bg-indigo-950/30 p-6 hover:border-indigo-500/40 hover:bg-indigo-950/50 transition-all duration-200"
+  aria-label={title}
+>
+  <!-- Icon -->
+  <div
+    class="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600/20 text-indigo-400 group-hover:bg-indigo-600/30 transition-colors"
+    aria-hidden="true"
+  >
+    <Fragment set:html={icon} />
+  </div>
+
+  <!-- Title -->
+  <h3 class="mb-2 text-base font-semibold text-white">
+    {title}
+  </h3>
+
+  <!-- Description -->
+  <p class="text-sm leading-relaxed text-neutral-400">
+    {description}
+  </p>
+</article>

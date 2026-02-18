@@ -1,0 +1,308 @@
+system "ReactTaskManager":
+  version = "0.1.0"
+  
+  stack:
+    language = "TypeScript 5.0"
+    runtime = "Node.js"
+    bundler = "Vite 7.3"
+    framework = "React 18.2"
+    styling = "Tailwind CSS 3.4"
+    testing = "Vitest"
+    storybook = "Storybook 8.6"
+    state_management = "React Query 5.59"
+    forms = "React Hook Form 7.54 + Zod 3.23"
+    http = "Axios 1.7"
+    utilities = "clsx + tailwind-merge"
+  
+  intent:
+    primary = "Modern React task management application with type-safe forms, reusable UI components, and efficient state management"
+    outcomes = [
+      "Responsive and accessible UI with Tailwind CSS",
+      "Type-safe component architecture with TypeScript",
+      "Form validation with Zod schemas and React Hook Form",
+      "Reusable component library with Storybook",
+      "Efficient data fetching with React Query",
+      "Custom React hooks for common patterns"
+    ]
+  
+  # ============================================================================
+  # INTERFACES - Service Contracts
+  # ============================================================================
+  
+  interface DataStore:
+    doc = "Client-side data persistence abstraction"
+    method get(key: str) -> str
+    method set(key: str, value: str) -> void
+    method remove(key: str) -> void
+    invariants:
+      invariant "Thread-safe localStorage operations"
+      invariant "Handles JSON serialization errors gracefully"
+  
+  interface APIClient:
+    doc = "HTTP client for backend communication"
+    method get(url: str) -> JSON
+    method post(url: str, data: JSON) -> JSON
+    method put(url: str, data: JSON) -> JSON
+    method delete(url: str) -> JSON
+    invariants:
+      invariant "Uses Axios interceptors for error handling"
+      invariant "Supports authentication headers"
+      invariant "Returns typed responses"
+  
+  # ============================================================================
+  # MODULES - Component Architecture
+  # ============================================================================
+  
+  module UIComponents:
+    owns = [
+      "Button component with variants and sizes",
+      "Input component for controlled forms",
+      "Card component system (Card, CardHeader, CardTitle, CardContent)",
+      "UI component barrel exports"
+    ]
+    invariants:
+      invariant "All components use Tailwind CSS for styling"
+      invariant "All components support className prop for extensibility"
+      invariant "Button variants: default, outline, ghost, destructive"
+      invariant "Button sizes: sm, md, lg"
+      invariant "Components use clsx and tailwind-merge for class merging"
+      invariant "Accessible by default with ARIA labels and keyboard navigation"
+      invariant "Input components handle controlled state"
+      invariant "Card components compose together"
+    
+    acceptance:
+      test "Button renders with all variants correctly"
+      test "Button renders with all sizes correctly"
+      test "Input handles controlled state changes"
+      test "Card components compose correctly"
+      test "All components work with Storybook"
+      test "Components support className override"
+    
+    artifacts = [
+      "src/components/ui/button.tsx",
+      "src/components/ui/input.tsx",
+      "src/components/ui/card.tsx",
+      "src/components/ui/index.ts"
+    ]
+  
+  module FormComponents:
+    owns = [
+      "FormField component with label and error display",
+      "React Hook Form integration",
+      "Zod schema validation support"
+    ]
+    invariants:
+      invariant "FormField integrates with React Hook Form register"
+      invariant "Displays field-level validation errors"
+      invariant "Supports Zod schema validation"
+      invariant "Shows label and error messages"
+    
+    acceptance:
+      test "Displays validation errors from React Hook Form"
+      test "Works with React Hook Form register"
+      test "Renders label and input correctly"
+      test "Shows error message when validation fails"
+    
+    artifacts = ["components/forms/form-field.tsx"]
+  
+  module TodoModule:
+    api:
+      model Todo:
+        field id: str
+        field text: str
+        field completed: bool
+        field createdAt: datetime
+    
+    invariants:
+      invariant "Todos use crypto.randomUUID() for unique IDs"
+      invariant "Empty input cannot create todo"
+      invariant "Enter key submits new todo"
+      invariant "Shows completed count and total count"
+      invariant "Can clear all completed todos at once"
+      invariant "TodoList manages local state with useState"
+      invariant "TodoItem receives callbacks for toggle and delete"
+    
+    acceptance:
+      test "Creates new todo with valid input"
+      test "Prevents empty todo creation"
+      test "Toggles todo completed state"
+      test "Deletes todo by id"
+      test "Clears all completed todos"
+      test "Displays task counts correctly"
+      test "Enter key adds todo"
+    
+    artifacts = [
+      "src/components/TodoList.tsx",
+      "src/components/TodoItem.tsx"
+    ]
+  
+  module CustomHooks:
+    owns = [
+      "useLocalStorage hook for persistent state",
+      "useDebounce hook for delayed value updates"
+    ]
+    invariants:
+      invariant "All hooks follow React hooks rules (no conditional calls)"
+      invariant "useLocalStorage handles SSR (checks for window undefined)"
+      invariant "useLocalStorage persists to localStorage on change"
+      invariant "useLocalStorage handles JSON parse errors gracefully"
+      invariant "useDebounce delays value updates by specified milliseconds"
+      invariant "Hooks clean up side effects properly"
+      invariant "Type-safe with TypeScript generics"
+    
+    acceptance:
+      test "useLocalStorage persists state across page reloads"
+      test "useLocalStorage handles JSON parse errors"
+      test "useLocalStorage works with SSR (window undefined)"
+      test "useDebounce delays value updates correctly"
+      test "useDebounce cleanup works on unmount"
+      test "Hooks work in SSR environment"
+    
+    artifacts = [
+      "src/hooks/use-local-storage.ts",
+      "src/hooks/use-debounce.ts"
+    ]
+  
+  module APIClientModule:
+    implements = [APIClient]
+    exports = [APIClient]
+    
+    invariants:
+      invariant "Uses Axios as HTTP client"
+      invariant "Centralized error handling with request interceptors"
+      invariant "Centralized error handling with response interceptors"
+      invariant "Type-safe responses with ApiResponse generic type"
+      invariant "Supports authentication headers via interceptors"
+      invariant "Base URL configurable"
+    
+    acceptance:
+      test "Makes successful GET request"
+      test "Makes successful POST request"
+      test "Makes successful PUT request"
+      test "Makes successful DELETE request"
+      test "Handles network errors gracefully"
+      test "Returns typed responses"
+      test "Supports authentication headers"
+      test "Interceptors transform requests"
+      test "Interceptors handle response errors"
+    
+    artifacts = ["lib/api-client.ts"]
+  
+  module ReactQueryProvider:
+    requires = [APIClient]
+    owns = [
+      "QueryProvider component setup",
+      "QueryClient configuration",
+      "React Query DevTools integration"
+    ]
+    invariants:
+      invariant "Configures React Query with sensible defaults"
+      invariant "Wraps app with QueryClientProvider"
+      invariant "Enables React Query DevTools in development mode"
+      invariant "Sets retry policy for failed requests"
+      invariant "Sets staleTime and cacheTime defaults"
+    
+    acceptance:
+      test "QueryProvider wraps children correctly"
+      test "queryClient is accessible to children"
+      test "Configures retry defaults"
+      test "Configures cache defaults"
+      test "DevTools enabled in development"
+    
+    artifacts = [
+      "providers/query-provider.tsx",
+      "lib/query-client.ts"
+    ]
+  
+  module Utilities:
+    owns = [
+      "cn() class name merger using clsx and tailwind-merge",
+      "formatDate() date formatting helper"
+    ]
+    invariants:
+      invariant "cn() merges Tailwind classes without conflicts"
+      invariant "cn() uses clsx for conditional classes"
+      invariant "cn() uses tailwind-merge to prevent duplicate utilities"
+      invariant "All utilities are pure functions"
+      invariant "formatDate handles Date objects correctly"
+    
+    acceptance:
+      test "cn() merges classes correctly"
+      test "cn() handles conditional classes"
+      test "cn() prevents Tailwind class conflicts"
+      test "formatDate formats dates consistently"
+    
+    artifacts = [
+      "src/lib/utils.ts",
+      "lib/form-utils.ts"
+    ]
+  
+  module TypeDefinitions:
+    api:
+      model User:
+        field id: str
+        field email: str
+        field name: str
+        field createdAt: datetime
+      
+      model ApiResponse:
+        field data: JSON
+        field message: str
+        field error: str
+      
+      model PaginatedResponse:
+        field data: List[JSON]
+        field total: int
+        field page: int
+        field pageSize: int
+        field totalPages: int
+      
+      model Todo:
+        field id: str
+        field text: str
+        field completed: bool
+        field createdAt: datetime
+    
+    invariants:
+      invariant "All types exported from single barrel file"
+      invariant "Generic types use TypeScript generics"
+      invariant "Types are reusable across modules"
+    
+    artifacts = ["src/types/index.ts"]
+  
+  # ============================================================================
+  # PIPELINE - Development Workflow
+  # ============================================================================
+  
+  pipeline "Development":
+    step Setup:
+      output = code
+      modules = ["TypeDefinitions"]
+      gate = "Dependencies installed successfully"
+    
+    step ImplementCore:
+      output = code
+      modules = ["UIComponents", "Utilities", "CustomHooks"]
+      gate = "All UI components render in Storybook"
+    
+    step ImplementFeatures:
+      output = code
+      modules = ["TodoModule", "FormComponents"]
+      gate = "Todo feature works end-to-end"
+    
+    step ImplementAPI:
+      output = code
+      modules = ["APIClientModule", "ReactQueryProvider"]
+      gate = "API client handles requests and errors"
+    
+    step Testing:
+      output = tests
+      gate = "All acceptance tests pass"
+    
+    step Documentation:
+      output = docs
+      gate = "All components have stories"
+    
+    step Polish:
+      output = code
+      gate = "ESLint passes and bundle size under target"

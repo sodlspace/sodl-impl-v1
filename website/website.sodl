@@ -1,0 +1,211 @@
+# Reusable base for Astro/Tailwind/Vercel static sites
+template "AstroSiteBase":
+  stack:
+    language = "TypeScript"
+    styling = "Tailwind CSS 4"
+    hosting = "Vercel"
+    package_manager = "npm"
+  policy Accessibility:
+    rule "All interactive elements have aria attributes" severity=high
+    rule "Components use semantic HTML" severity=medium
+  policy Styling:
+    rule "Styling via Tailwind CSS utility classes and Starlight CSS variables" severity=high
+    rule "No component imports tailwind config directly — use utility classes only" severity=medium
+
+# Base contract for all Astro single-file UI components
+interface AstroComponent:
+  doc = "Base Astro .astro single-file component"
+  method render() -> str
+  invariants:
+    invariant "Component uses Astro .astro single-file component format"
+    invariant "Styling via Tailwind CSS utility classes and Starlight CSS variables"
+    invariant "Accessible: interactive elements have aria attributes"
+
+system "SODLWebsite" extends "AstroSiteBase":
+  version = "1.0.0"
+  stack:
+    framework = "Astro 5"
+    documentation = "Starlight 0.32"
+
+  intent:
+    primary = "Marketing and documentation website for the SODL language at sodl.space"
+    outcomes = [
+      "Present SODL value proposition via Hero section with CTAs",
+      "Render full documentation through Starlight with sidebar navigation",
+      "Highlight key features in a responsive FeatureGrid",
+      "Explain SODL pipeline: Intent → Architecture → Constraints → Generation",
+      "Target audiences section: Cursor, Claude, GPT developers",
+      "Show syntax-highlighted SODL code examples via CodePreview",
+      "ContactBanner footer strip with email and GitHub links",
+      "Auto-deploy to Vercel on push to main"
+    ]
+    out_of_scope = [
+      "User authentication",
+      "Backend API",
+      "Payment processing",
+      "Community forums or comments",
+      "Real-time features"
+    ]
+
+  # UI component interfaces — all extend AstroComponent, each overrides render signature
+
+  interface NavigationComponent extends AstroComponent:
+    doc = "Site-wide header navigation"
+    override method render(props: str) -> str
+    invariants:
+      invariant "Logo links to home /"
+      invariant "Primary nav: Getting Started, Why SODL, Reference, Examples"
+      invariant "GitHub star button links to https://github.com/sodlspace/sodl-impl-v1"
+
+  interface HeroComponent extends AstroComponent:
+    doc = "Landing page hero section"
+    override method render(tagline: str, subtitle: str, primaryCTA: str, secondaryCTA: str) -> str
+    invariants:
+      invariant "tagline is the main H1 heading"
+      invariant "primaryCTA: accent-colored filled button with arrow"
+      invariant "secondaryCTA: outlined button"
+      invariant "Active Development badge shown above heading"
+      invariant "Section accessible with aria-labelledby"
+
+  interface FeatureCardComponent extends AstroComponent:
+    doc = "Individual feature card with icon, title, description"
+    override method render(title: str, description: str, icon: str) -> str
+    invariants:
+      invariant "icon is an SVG string rendered as HTML"
+      invariant "Card uses accent-low background with accent border"
+
+  interface FeatureGridComponent extends AstroComponent:
+    doc = "Responsive grid of FeatureCard components"
+    override method render(features: str) -> str
+    invariants:
+      invariant "Grid: 1 column mobile, 2 sm, 3 lg"
+      invariant "Default icons cycle: modular, shield, signal"
+
+  interface PhilosophyStripComponent extends AstroComponent:
+    doc = "Horizontal pipeline: Intent → Architecture → Constraints → Generation"
+    override method render(stages: str) -> str
+    invariants:
+      invariant "Each stage: labeled box + description + arrow separator"
+      invariant "Scrollable horizontally on small screens"
+
+  interface WhoIsItForComponent extends AstroComponent:
+    doc = "Target audiences list with checkmark icons"
+    override method render(audiences: str) -> str
+    invariants:
+      invariant "Default audiences: Cursor, Claude, GPT developers"
+      invariant "Each item: bold name, detail text, checkmark icon"
+
+  interface CodePreviewComponent extends AstroComponent:
+    doc = "Code fence with title bar; delegates syntax highlighting to expressive-code"
+    override method render(title: str) -> str
+    invariants:
+      invariant "Default title is example.sodl"
+      invariant "SODL grammar registered in expressive-code shiki langs"
+      invariant "Inner code via slot; copy button included"
+
+  interface ContactBannerComponent extends AstroComponent:
+    doc = "Compact CTA strip in Starlight footer slot"
+    override method render() -> str
+    invariants:
+      invariant "Links to sodl.space@gmail.com and GitHub"
+      invariant "Accent-low background with hairline top border"
+      invariant "Injected via StarlightOverride layout, never duplicated"
+
+  interface SiteFooterComponent extends AstroComponent:
+    doc = "Full site footer with copyright, email, GitHub"
+    override method render() -> str
+    invariants:
+      invariant "Copyright year computed at build time"
+      invariant "Version badge shows active-development status"
+
+  # Modules
+
+  module AstroConfig:
+    owns = ["Site-wide Astro and Starlight configuration"]
+    config:
+      site = "https://sodl.space"
+      title = "SODL"
+      description = "Specification Orchestration Definition Language — turn AI code generation from guesswork into engineering."
+      github = "https://github.com/sodlspace/sodl-impl-v1"
+      email = "sodl.space@gmail.com"
+    invariants:
+      invariant "SODL tmLanguage grammar registered in expressive-code and markdown shikiConfig"
+      invariant "OG image: https://sodl.space/og-card.png; Twitter card: summary_large_image"
+      invariant "Sitemap integration enabled"
+      invariant "Sidebar: Getting Started, Why SODL, Language Reference (auto from language/), Examples (auto from examples/), Contact"
+      invariant "Starlight components.Footer registered to StarlightOverride"
+    artifacts = ["website/astro.config.mjs"]
+
+  module UIComponents:
+    implements = [NavigationComponent, HeroComponent, FeatureCardComponent, FeatureGridComponent, PhilosophyStripComponent, WhoIsItForComponent, CodePreviewComponent, ContactBannerComponent, SiteFooterComponent]
+    exports = [NavigationComponent, HeroComponent, FeatureCardComponent, FeatureGridComponent, PhilosophyStripComponent, WhoIsItForComponent, CodePreviewComponent, ContactBannerComponent, SiteFooterComponent]
+    artifacts = ["website/src/components/"]
+
+  module StarlightOverrideLayout:
+    owns = ["Replaces Starlight built-in Footer with ContactBanner + SiteFooter"]
+    requires = [ContactBannerComponent, SiteFooterComponent]
+    invariants:
+      invariant "ContactBanner renders before SiteFooter"
+    artifacts = ["website/src/layouts/StarlightOverride.astro"]
+
+  module DocumentationContent:
+    owns = ["All Markdown/MDX documentation pages"]
+    invariants:
+      invariant "Content in website/src/content/docs/"
+      invariant "Pages: getting-started.md, why-sodl.md, contact.md; dirs: language/, examples/"
+      invariant "Pages use Starlight frontmatter: title, description"
+    artifacts = ["website/src/content/docs/"]
+
+  module SodlSyntaxHighlighting:
+    owns = ["SODL tmLanguage grammar for syntax highlighting"]
+    invariants:
+      invariant "Grammar file at website/src/sodl.tmLanguage.json"
+      invariant "Enables sodl code fence language identifier in MDX pages"
+    artifacts = ["website/src/sodl.tmLanguage.json"]
+
+  module StaticAssets:
+    owns = ["Global CSS and public static assets"]
+    invariants:
+      invariant "Global CSS at website/src/styles/global.css"
+      invariant "OG image at website/public/og-card.png"
+      invariant "Tailwind CSS configured via @tailwindcss/vite plugin"
+    artifacts = ["website/src/styles/", "website/public/"]
+
+  module DeploymentConfig:
+    owns = ["Vercel deployment configuration"]
+    config:
+      framework = "astro"
+    invariants:
+      invariant "vercel.json at website root; build output: dist/"
+    artifacts = ["website/vercel.json"]
+
+  pipeline "Development":
+    step Install:
+      output = "node_modules"
+      require = "npm install in website/"
+      gate = "All dependencies installed: astro, starlight, tailwindcss"
+    step Dev:
+      modules = ["UIComponents", "DocumentationContent", "AstroConfig"]
+      output = "dev_server"
+      require = "astro dev"
+      gate = "Dev server running with HMR, sodl syntax highlighting active"
+    step Check:
+      modules = ["UIComponents", "DocumentationContent"]
+      output = "type_check"
+      require = "astro check"
+      gate = "No TypeScript type errors"
+
+  pipeline "Production":
+    step Install:
+      output = "node_modules"
+      require = "npm install with pinned versions"
+      gate = "Clean dependency tree installed"
+    step Build:
+      modules = ["UIComponents", "DocumentationContent", "AstroConfig", "StaticAssets", "SodlSyntaxHighlighting"]
+      output = "dist/"
+      require = "astro build"
+      gate = "Static site built to dist/ with sitemap, all pages rendered"
+    step Deploy:
+      output = "deployment"
+      require = "Push to main triggers Vercel deployment"
+      gate = "Site live at https://sodl.space with valid OG metadata"

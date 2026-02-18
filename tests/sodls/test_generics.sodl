@@ -1,0 +1,15 @@
+system "TestGenerics":
+  version = "1.0.0"
+
+  intent:
+    primary = "Testing generic type syntax support"
+
+  interface TestInterface:
+    doc = "Interface for testing generics"
+    method test_square_brackets() -> List<Todo>
+    method test_angle_brackets() -> List<Todo>
+    method test_result_type() -> Result<Success, Error>
+    method test_optional() -> Optional<Value>
+    method test_optional_angles() -> Optional<Value>
+    invariants:
+      invariant "Supports both bracket styles for generics"

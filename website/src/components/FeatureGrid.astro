@@ -1,0 +1,100 @@
+---
+import FeatureCard from './FeatureCard.astro';
+
+interface Feature {
+  title: string;
+  description: string;
+  icon: string;
+}
+
+interface Props {
+  features?: Feature[];
+}
+
+const modularIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>`;
+
+const shieldIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`;
+
+const signalIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`;
+
+const layersIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>`;
+
+const codeIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>`;
+
+const botIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>`;
+
+const icons = [modularIcon, shieldIcon, signalIcon, layersIcon, codeIcon, botIcon];
+
+const defaultFeatures: Feature[] = [
+  {
+    title: 'Structured Intent',
+    description:
+      'Define what you are building, not just how. SODL captures the why so AI understands context, purpose, and scope — before writing a single line of code.',
+    icon: modularIcon,
+  },
+  {
+    title: 'Architectural Constraints',
+    description:
+      'Enforce design decisions, policies, and invariants that AI agents must respect. Say "no auth, no backend" once — and it sticks.',
+    icon: shieldIcon,
+  },
+  {
+    title: 'Generation Pipeline',
+    description:
+      'Orchestrate multi-step code generation with named steps, gates, and validation. Each stage has clear outputs and pass criteria.',
+    icon: signalIcon,
+  },
+  {
+    title: 'Framework Agnostic',
+    description:
+      'Works with any tech stack. TypeScript, Python, Rust, Astro, Django — you declare the stack and let the AI fill in the rest.',
+    icon: layersIcon,
+  },
+  {
+    title: 'Reusable Templates',
+    description:
+      'Define base templates for common architectures and extend them across projects. Share design decisions across your team.',
+    icon: codeIcon,
+  },
+  {
+    title: 'AI-Native Design',
+    description:
+      'Built from the ground up for Cursor, Claude, GPT-4, and the next generation of AI coding agents. Structured context, not free-form prompts.',
+    icon: botIcon,
+  },
+];
+
+const { features = defaultFeatures } = Astro.props;
+---
+
+<section class="px-6 py-20" aria-labelledby="features-heading">
+  <div class="mx-auto max-w-7xl">
+    <div class="text-center mb-12">
+      <h2
+        id="features-heading"
+        class="text-3xl font-bold text-white sm:text-4xl"
+      >
+        Everything you need for structured AI generation
+      </h2>
+      <p class="mt-4 text-lg text-neutral-400 max-w-2xl mx-auto">
+        SODL gives you the primitives to express what you're building with
+        enough precision for AI to get it right — every time.
+      </p>
+    </div>
+
+    <div
+      class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+      role="list"
+    >
+      {features.map((feature) => (
+        <div role="listitem">
+          <FeatureCard
+            title={feature.title}
+            description={feature.description}
+            icon={feature.icon}
+          />
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

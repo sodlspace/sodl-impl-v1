@@ -1,0 +1,331 @@
+system "PresentationGenerator":
+  version = "1.0.0"
+  stack:
+    language = "Python 3.12"
+    backend = "FastAPI 0.115"
+    frontend = "React 18.2 + TypeScript 5.0"
+    database = "None (stateless service)"
+    ui_framework = "Material-UI 5.14"
+    build_tool = "Vite 5.0"
+    pptx_library = "python-pptx 0.6.23"
+    js_pptx_library = "pptxgenjs 3.12.0"
+    http_client = "Axios 1.6.0"
+    
+  intent:
+    primary = "Web application that generates PPTX presentations from case study inputs using a template-based approach with length-limited content"
+    outcomes = [
+      "Accept case study details as structured input from users",
+      "Apply content to predefined PPTX template (Template EXAMPLE.pptx)",
+      "Handle length limitations for content to fit within slide constraints",
+      "Provide preview functionality before finalizing presentation",
+      "Allow download of generated PPTX files",
+      "Responsive web interface for input and preview",
+      "Robust error handling for template and content mismatches"
+    ]
+    out_of_scope = [
+      "Multi-user authentication",
+      "Presentation storage on server",
+      "Real-time collaboration",
+      "Advanced template customization by users"
+    ]
+
+  # ============================================================================
+  # INTERFACES - Service Contracts
+  # ============================================================================
+
+  interface PPTXGenerator:
+    doc = "Service for generating PPTX presentations from templates and content"
+    method generate_presentation(case_study_data: CaseStudyInput, template_path: str) -> str
+    method validate_template(template_path: str) -> bool
+    method get_template_info(template_path: str) -> TemplateInfo
+    invariants:
+      invariant "Generated presentations maintain original template formatting"
+      invariant "Content respects character/line limits per slide element"
+      invariant "Images and media are properly embedded in presentation"
+      invariant "Generated files are saved temporarily and cleaned up"
+
+  interface ContentProcessor:
+    doc = "Service for processing and validating content before insertion"
+    method truncate_content(content: str, max_length: int) -> str
+    method sanitize_content(content: str) -> str
+    method validate_placeholders(data: CaseStudyInput, template_info: TemplateInfo) -> List[str]
+    invariants:
+      invariant "Content truncation preserves meaning where possible"
+      invariant "Sanitization removes potentially harmful elements"
+      invariant "Placeholder validation ensures data-template compatibility"
+
+  interface TemplateManager:
+    doc = "Service for managing presentation templates"
+    method load_template(template_path: str) -> Template
+    method get_available_templates() -> List[TemplateInfo]
+    method validate_template_compatibility(template: Template, data: CaseStudyInput) -> bool
+    invariants:
+      invariant "Template loading preserves original formatting"
+      invariant "Only validated templates are available for use"
+      invariant "Template compatibility checks prevent generation errors"
+
+  # ============================================================================
+  # MODULES - Component Architecture
+  # ============================================================================
+
+  module BackendAPI:
+    requires = [PPTXGenerator, ContentProcessor, TemplateManager]
+    owns = [
+      "REST API endpoints for presentation generation",
+      "File upload and download handlers",
+      "Request validation and response formatting"
+    ]
+    api:
+      endpoint "POST /api/generate-presentation" -> GeneratedPresentationResponse
+      endpoint "GET /api/templates" -> List[TemplateInfoResponse]
+      endpoint "POST /api/validate-content" -> ValidationResultResponse
+      endpoint "GET /api/download/{file_id}" -> FileDownloadResponse
+    invariants:
+      invariant "All endpoints return appropriate HTTP status codes"
+      invariant "File uploads are validated for security"
+      invariant "Generated files have unique identifiers"
+      invariant "Temporary files are cleaned up after download"
+    acceptance:
+      test "Generates presentation with valid input"
+      test "Returns error for invalid template"
+      test "Handles file download requests"
+      test "Validates content before processing"
+    artifacts = [
+      "backend/main.py",
+      "backend/api/endpoints.py",
+      "backend/api/models.py",
+      "backend/api/schemas.py"
+    ]
+
+  module PPTXGenerationModule:
+    implements = [PPTXGenerator, ContentProcessor, TemplateManager]
+    exports = [PPTXGenerator, ContentProcessor, TemplateManager]
+    owns = [
+      "Core PPTX generation logic using python-pptx",
+      "Template loading and manipulation",
+      "Content insertion with length constraints",
+      "Image and media embedding",
+      "Template validation and compatibility checking"
+    ]
+    invariants:
+      invariant "Uses python-pptx for reliable PPTX manipulation"
+      invariant "Respects character limits per placeholder in template"
+      invariant "Maintains original template design and layout"
+      invariant "Handles both text and media content appropriately"
+      invariant "Implements fallback strategies for content overflow"
+    acceptance:
+      test "Successfully generates presentation from template"
+      test "Truncates content to fit within slide constraints"
+      test "Embeds images correctly in slides"
+      test "Validates template compatibility"
+      test "Handles edge cases like empty content"
+    artifacts = [
+      "backend/services/pptx_generator.py",
+      "backend/services/content_processor.py",
+      "backend/services/template_manager.py",
+      "backend/utils/presentation_utils.py"
+    ]
+
+  module FrontendApp:
+    owns = [
+      "Main React application structure",
+      "Routing and navigation",
+      "State management with React hooks",
+      "Global styles and theme configuration"
+    ]
+    invariants:
+      invariant "Uses TypeScript for type safety"
+      invariant "Follows React best practices and hooks"
+      invariant "Implements responsive design principles"
+      invariant "Manages state efficiently with Context API or Redux"
+    acceptance:
+      test "Application loads without errors"
+      test "Navigation works correctly"
+      test "Theme applies consistently"
+    artifacts = [
+      "frontend/src/App.tsx",
+      "frontend/src/main.tsx",
+      "frontend/src/vite-env.d.ts",
+      "frontend/src/theme.ts"
+    ]
+
+  module PresentationGeneratorUI:
+    requires = [BackendAPI]
+    owns = [
+      "Case study input form with validation",
+      "Template selection interface",
+      "Preview functionality",
+      "Presentation download controls",
+      "Error and status messaging"
+    ]
+    invariants:
+      invariant "Form validates input before submission"
+      invariant "Provides real-time feedback during generation"
+      invariant "Handles API errors gracefully"
+      invariant "Responsive design for all device sizes"
+    acceptance:
+      test "Form accepts and validates case study input"
+      test "Template selection works correctly"
+      test "Preview shows content in presentation format"
+      test "Download button works for generated presentations"
+      test "Error messages are displayed appropriately"
+    artifacts = [
+      "frontend/src/components/PresentationGenerator.tsx",
+      "frontend/src/components/CaseStudyForm.tsx",
+      "frontend/src/components/TemplateSelector.tsx",
+      "frontend/src/components/PreviewPanel.tsx",
+      "frontend/src/components/FileDownloader.tsx"
+    ]
+
+  module APIClient:
+    requires = [BackendAPI]
+    owns = [
+      "HTTP client configuration",
+      "Request/response interceptors",
+      "Error handling utilities",
+      "Authentication headers (if needed)"
+    ]
+    invariants:
+      invariant "Uses Axios for HTTP requests"
+      invariant "Handles timeouts appropriately"
+      invariant "Formats requests according to API specification"
+      invariant "Processes responses consistently"
+    acceptance:
+      test "Successfully sends generation requests"
+      test "Handles API errors correctly"
+      test "Uploads files properly"
+      test "Downloads files properly"
+    artifacts = [
+      "frontend/src/services/api.ts",
+      "frontend/src/services/httpClient.ts"
+    ]
+
+  module UIComponents:
+    owns = [
+      "Reusable UI components (buttons, inputs, cards)",
+      "Form components with validation",
+      "Loading and error display components",
+      "File upload components"
+    ]
+    invariants:
+      invariant "Components follow Material-UI design guidelines"
+      invariant "All components are properly typed with TypeScript"
+      invariant "Components are accessible and responsive"
+      invariant "Consistent styling across the application"
+    acceptance:
+      test "Buttons render with correct styles"
+      test "Form components validate input"
+      test "Loading indicators appear during requests"
+      test "Error components display messages properly"
+    artifacts = [
+      "frontend/src/components/ui/Button.tsx",
+      "frontend/src/components/ui/Input.tsx",
+      "frontend/src/components/ui/Card.tsx",
+      "frontend/src/components/ui/LoadingSpinner.tsx",
+      "frontend/src/components/ui/ErrorDisplay.tsx",
+      "frontend/src/components/ui/FileUpload.tsx"
+    ]
+
+  module TypesAndInterfaces:
+    owns = [
+      "TypeScript type definitions for all data structures",
+      "Interface definitions for API responses",
+      "Utility types for the application"
+    ]
+    invariants:
+      invariant "All types are properly defined and exported"
+      invariant "Types align with backend API schemas"
+      invariant "Reusable types are defined in shared location"
+    artifacts = [
+      "frontend/src/types/index.ts",
+      "frontend/src/types/api.ts",
+      "frontend/src/types/presentation.ts"
+    ]
+
+  # ============================================================================
+  # DATA MODELS
+  # ============================================================================
+
+  module DataModels:
+    api:
+      model CaseStudyInput:
+        field title: str
+        field subtitle: str
+        field executive_summary: str
+        field problem_statement: str
+        field solution_approach: str
+        field implementation_details: str
+        field results_metrics: str
+        field conclusion: str
+        field supporting_images: List[str]
+        field author: str
+        field date: str
+        
+      model TemplateInfo:
+        field id: str
+        field name: str
+        field description: str
+        field placeholders: List[str]
+        field max_text_lengths: dict
+        
+      model GeneratedPresentationResponse:
+        field file_id: str
+        field download_url: str
+        field filename: str
+        field size: int
+        field created_at: datetime
+        
+      model ValidationResultResponse:
+        field is_valid: bool
+        field errors: List[str]
+        field warnings: List[str]
+        
+      model TemplateInfoResponse:
+        field id: str
+        field name: str
+        field description: str
+        field placeholders: List[str]
+
+  # ============================================================================
+  # PIPELINE - Development Workflow
+  # ============================================================================
+
+  pipeline "Development":
+    step SetupProject:
+      output = code
+      modules = ["FrontendApp", "TypesAndInterfaces"]
+      require = "Initialize FastAPI backend and React frontend with proper configurations"
+      gate = "Both backend and frontend applications start without errors"
+
+    step ImplementCoreServices:
+      output = code
+      modules = ["PPTXGenerationModule"]
+      require = "Implement PPTX generation, content processing, and template management services"
+      gate = "Services pass unit tests and handle basic generation scenarios"
+
+    step DevelopAPI:
+      output = code
+      modules = ["BackendAPI", "APIClient"]
+      require = "Create API endpoints and client-side API integration"
+      gate = "API endpoints accept requests and return appropriate responses"
+
+    step BuildUIComponents:
+      output = code
+      modules = ["UIComponents", "PresentationGeneratorUI"]
+      require = "Develop reusable UI components and main presentation generator interface"
+      gate = "UI components render correctly and handle user interactions"
+
+    step IntegrationTesting:
+      output = tests
+      require = "End-to-end tests connecting frontend, API, and backend services"
+      gate = "Complete workflow from input to presentation generation works"
+
+    step ValidationAndPolish:
+      output = code
+      require = "Add comprehensive validation, error handling, and UI polish"
+      gate = "Application handles edge cases and provides good user experience"
+
+    step Documentation:
+      output = docs
+      require = "Create user documentation and developer setup guides"
+      gate = "Documentation covers installation, usage, and customization"

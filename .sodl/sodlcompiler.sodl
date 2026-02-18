@@ -1,0 +1,440 @@
+system "SODLCompiler":
+  version = "0.3.0"
+
+  stack:
+    language = "Python 3.12"
+    build = "uv"
+    testing = "pytest"
+    protocols = "MCP"
+
+  intent:
+    primary = "Build a complete compiler for the SODL DSL that enables controlled AI-driven code generation through explicit specifications"
+    outcomes = [
+      "Parse and validate SODL files with detailed error reporting",
+      "Generate structured AST for specification analysis",
+      "Provide MCP server for AI agent integration",
+      "Enable syntax validation and semantic analysis",
+      "Support CLI and programmatic compilation"
+    ]
+    out_of_scope = [
+      "Code generation from specifications (handled by AI agents)",
+      "IDE language server protocol implementation",
+      "Runtime execution of specifications"
+    ]
+  
+  # ===========================
+  # CORE COMPILER INTERFACES
+  # ===========================
+  
+  interface Lexer:
+    doc = "Tokenizes SODL source code into a stream of tokens"
+    method lex(source_code: str) -> List[Token]
+    method get_keywords() -> List[str]
+    invariants:
+      invariant "Preserve line and column information for all tokens"
+      invariant "Handle indentation-based syntax correctly"
+      invariant "Support string literals with escape sequences"
+
+  interface Parser:
+    doc = "Parses token stream into Abstract Syntax Tree (AST)"
+    method parse(tokens: List[Token]) -> Program
+    method expect(token_type: TokenType, error_msg: str) -> Token
+    method consume(token_type: TokenType) -> bool
+    method peek(offset: int) -> Optional[Token]
+    invariants:
+      invariant "Generate meaningful error messages with line/column info"
+      invariant "Handle Python-like indentation blocks"
+      invariant "Support nested constructs (interfaces, modules, pipelines)"
+
+  interface SemanticAnalyzer:
+    doc = "Validates AST for semantic correctness and reports issues"
+    method analyze(program: Program) -> None
+    method visit(node: ASTNode) -> None
+    method check_undefined_references() -> None
+    method validate_module_dependencies() -> None
+    invariants:
+      invariant "Detect undefined interface references in requires/implements"
+      invariant "Validate circular dependencies between modules"
+      invariant "Check for duplicate declarations"
+      invariant "Verify method implementations match interface contracts"
+
+  interface ErrorReporter:
+    doc = "Collects and formats compilation errors and warnings"
+    method error(message: str, line: int, column: int) -> None
+    method warning(message: str, line: int, column: int) -> None
+    method has_errors() -> bool
+    method has_warnings() -> bool
+    method print_diagnostics() -> None
+    invariants:
+      invariant "Categorize issues by severity (error, warning)"
+      invariant "Include context (line, column, filename)"
+      invariant "Format output for human readability"
+
+  interface ASTNode:
+    doc = "Base representation for all AST nodes"
+    field line: int
+    field column: int
+    method to_dict() -> dict
+    invariants:
+      invariant "All nodes preserve source location"
+
+  interface Compiler:
+    doc = "Main compiler interface orchestrating the compilation pipeline"
+    method compile(source_code: str, filename: str) -> bool
+    method get_ast() -> Optional[Program]
+    method get_error_reporter() -> ErrorReporter
+    method has_errors() -> bool
+    method has_warnings() -> bool
+    invariants:
+      invariant "Compilation is deterministic (same input produces same AST)"
+      invariant "All phases (lex, parse, analyze) complete even if errors occur"
+
+  # ===========================
+  # AST NODE INTERFACES
+  # ===========================
+
+  interface ASTDefinitions:
+    doc = "AST node definitions for all SODL constructs"
+    model Program:
+      field statements: List[Statement]
+
+    model SystemBlock:
+      field name: Token
+      field stack: Optional[StackBlock]
+      field intent: Optional[IntentBlock]
+      field body: List[Statement]
+
+    model InterfaceBlock:
+      field name: Token
+      field doc: Optional[str]
+      field methods: List[MethodDecl]
+      field invariants: List[Invariant]
+
+    model ModuleBlock:
+      field name: Token
+      field doc: Optional[str]
+      field requires: List[str]
+      field implements: List[str]
+      field exports: List[str]
+      field api_block: Optional[ApiBlock]
+      field invariants: List[Invariant]
+      field acceptance: List[AcceptanceTest]
+      field artifacts: List[str]
+
+    invariants:
+      invariant "All AST nodes inherit from ASTNode base class"
+      invariant "AST is immutable after construction"
+  
+  # ===========================
+  # COMPILER MODULES
+  # ===========================
+  
+  module LexerModule:
+    doc = "Tokenization engine for SODL source files"
+    implements = [Lexer]
+    exports = [Lexer]
+
+    invariants:
+      invariant "Token stream maintains source position information"
+      invariant "Indentation tracking uses stack-based approach"
+      invariant "Keywords are case-insensitive"
+      invariant "String literals support both single and double quotes"
+
+    acceptance:
+      test "tokenizes keywords correctly"
+      test "handles indentation and dedentation"
+      test "preserves line and column numbers"
+      test "processes string literals with escape sequences"
+      test "handles comments (if supported)"
+      test "reports lexical errors with position"
+
+    artifacts = ["sodlcompiler/lexer.py"]
+
+  module ParserModule:
+    doc = "Recursive descent parser generating AST from tokens"
+    requires = [Lexer]
+    implements = [Parser]
+    exports = [Parser]
+
+    invariants:
+      invariant "Parser is recursive descent with predictive lookahead"
+      invariant "Error recovery allows continued parsing after syntax errors"
+      invariant "All language constructs map to AST nodes"
+      invariant "Maintains operator precedence and associativity"
+
+    acceptance:
+      test "parses valid system declarations"
+      test "parses interfaces with methods"
+      test "parses modules with all sections"
+      test "parses pipelines with steps"
+      test "reports syntax errors with context"
+      test "handles nested blocks correctly"
+      test "validates proper indentation structure"
+
+    artifacts = ["sodlcompiler/parser.py"]
+
+  module ASTModule:
+    doc = "Abstract Syntax Tree node definitions and utilities"
+    implements = [ASTNode, ASTDefinitions]
+    exports = [ASTNode, ASTDefinitions]
+
+    invariants:
+      invariant "All nodes have line and column attributes"
+      invariant "AST is serializable to dict/JSON"
+      invariant "Node hierarchy reflects language structure"
+
+    acceptance:
+      test "all nodes have required attributes"
+      test "to_dict() produces valid JSON-serializable output"
+      test "AST preserves all source information"
+
+    artifacts = ["sodlcompiler/ast.py"]
+
+  module SemanticAnalyzerModule:
+    doc = "Validates AST for semantic correctness and consistency"
+    requires = [ASTNode, ErrorReporter]
+    implements = [SemanticAnalyzer]
+    exports = [SemanticAnalyzer]
+
+    invariants:
+      invariant "Symbol table tracks all declared entities"
+      invariant "Validates interface references in requires/implements"
+      invariant "Detects circular module dependencies"
+      invariant "Ensures methods match interface contracts"
+      invariant "Validates unique names within scopes"
+
+    acceptance:
+      test "detects undefined interface references"
+      test "identifies circular dependencies"
+      test "reports duplicate declarations"
+      test "validates module implements interface methods"
+      test "checks artifact paths are valid"
+      test "validates severity levels in policies"
+
+    artifacts = ["sodlcompiler/semantic_analyzer.py"]
+
+  module ErrorReporterModule:
+    doc = "Collects, categorizes, and formats compilation diagnostics"
+    implements = [ErrorReporter]
+    exports = [ErrorReporter]
+
+    invariants:
+      invariant "Errors are displayed before warnings"
+      invariant "Messages include file, line, and column"
+      invariant "Output is formatted for readability"
+      invariant "Thread-safe for concurrent compilation"
+
+    acceptance:
+      test "reports errors with correct position"
+      test "reports warnings with correct position"
+      test "formats output clearly"
+      test "distinguishes errors from warnings"
+
+    artifacts = ["sodlcompiler/errors.py"]
+
+  module CompilerModule:
+    doc = "Main compiler orchestrating lexing, parsing, and analysis"
+    requires = [Lexer, Parser, SemanticAnalyzer, ErrorReporter]
+    implements = [Compiler]
+    exports = [Compiler]
+
+    invariants:
+      invariant "Compilation phases execute in order: lex -> parse -> analyze"
+      invariant "Returns success status (bool)"
+      invariant "AST available after successful parsing"
+      invariant "Error reporter available regardless of success"
+
+    acceptance:
+      test "compiles valid SODL files successfully"
+      test "returns False for files with errors"
+      test "produces complete AST for valid input"
+      test "reports all compilation errors"
+      test "handles empty files gracefully"
+      test "processes all example specifications"
+
+    artifacts = ["sodlcompiler/compiler.py"]
+  
+  # ===========================
+  # CLI MODULE
+  # ===========================
+  
+  module CLIModule:
+    doc = "Command-line interface for the SODL compiler"
+    requires = [Compiler]
+
+    invariants:
+      invariant "Exit code 0 for success, non-zero for errors"
+      invariant "Support --show-ast flag for AST inspection"
+      invariant "Support --validate flag for syntax-only check"
+      invariant "Provide usage help with -h/--help"
+
+    acceptance:
+      test "compiles file from command line"
+      test "displays AST when --show-ast flag provided"
+      test "validates syntax when --validate flag provided"
+      test "returns appropriate exit codes"
+      test "shows help message"
+
+    artifacts = ["sodlcompiler/__main__.py"]
+  
+  # ===========================
+  # MCP SERVER MODULE
+  # ===========================
+  
+  interface MCPServer:
+    doc = "Model Context Protocol server for AI agent integration"
+    method provide_resources() -> List[Resource]
+    method provide_tools() -> List[Tool]
+    method handle_tool_call(name: str, arguments: dict) -> dict
+  
+  module MCPServerModule:
+    doc = "MCP server providing SODL compilation tools to AI agents"
+    requires = [Compiler]
+    implements = [MCPServer]
+    exports = [MCPServer]
+
+    invariants:
+      invariant "All documentation resources are accessible"
+      invariant "Tools return structured JSON responses"
+      invariant "Errors include detailed context"
+      invariant "Server handles concurrent requests"
+
+    acceptance:
+      test "serves documentation resources"
+      test "compiles SODL via tool call"
+      test "validates syntax via tool call"
+      test "returns AST via tool call"
+      test "handles invalid input gracefully"
+      test "responds to MCP protocol correctly"
+
+    artifacts = [
+      "sodl_mcp/sodl_mcp/server.py",
+      "sodl_mcp/pyproject.toml"
+    ]
+  
+  # ===========================
+  # TESTING MODULE
+  # ===========================
+  
+  module TestingModule:
+    doc = "Comprehensive test suite for compiler validation"
+    requires = [Compiler, Lexer, Parser, SemanticAnalyzer]
+    
+    acceptance:
+      test "lexer tokenizes all keywords"
+      test "parser handles all language constructs"
+      test "semantic analyzer detects all error types"
+      test "compiler processes example specifications"
+      test "error messages are clear and actionable"
+      test "AST serialization works correctly"
+      test "MCP server tools function correctly"
+      test "CLI handles all flags and options"
+    
+    artifacts = [
+      "test_compiler.py",
+      "test_example.py",
+      "sodl_mcp/tests/test_tools.py",
+      "sodl_mcp/tests/test_resources.py",
+      "sodl_mcp/tests/test_integration.py"
+    ]
+  
+  # ===========================
+  # POLICIES
+  # ===========================
+  
+  policy CodeQuality:
+    rule "Follow PEP 8 Python style guide" severity=high
+    rule "Use type hints for all public APIs" severity=high
+    rule "Write docstrings for all modules, classes, and functions" severity=medium
+    rule "Keep functions focused (max 50 lines preferred)" severity=medium
+    rule "Use descriptive variable and function names" severity=high
+  
+  policy ErrorHandling:
+    rule "Never silently catch exceptions" severity=critical
+    rule "Provide context in all error messages" severity=high
+    rule "Include line and column in compiler errors" severity=critical
+    rule "Distinguish between errors and warnings" severity=high
+    rule "Support error recovery for continued parsing" severity=medium
+  
+  policy Testing:
+    rule "All public functions must have tests" severity=high
+    rule "Test both success and error paths" severity=high
+    rule "Use pytest for all test suites" severity=high
+    rule "Maintain test coverage above 80%" severity=medium
+    rule "Include integration tests for full compilation" severity=high
+  
+  policy Documentation:
+    rule "Keep documentation in sync with code" severity=high
+    rule "Provide examples for all major features" severity=high
+    rule "Document all AST node structures" severity=medium
+    rule "Include usage examples in README" severity=high
+  
+  policy Dependencies:
+    rule "Minimize external dependencies" severity=medium
+    rule "Use uv for package management" severity=high
+    rule "Pin dependency versions in pyproject.toml" severity=high
+    rule "Keep Python 3.12+ as minimum version" severity=critical
+  
+  policy Security:
+    rule "Validate all file paths before access" severity=critical
+    rule "Sanitize user input in error messages" severity=high
+    rule "Avoid arbitrary code execution" severity=critical
+    rule "Use safe string formatting" severity=high
+  
+  # ===========================
+  # GENERATION PIPELINE
+  # ===========================
+  
+  pipeline "Development":
+    step Design:
+      modules = ["ASTModule"]
+      output = design
+      gate = "AST design reviewed and approved"
+
+    step ImplementCore:
+      modules = ["LexerModule", "ParserModule", "ErrorReporterModule"]
+      output = code
+      gate = "Core compilation pipeline functional"
+
+    step ImplementAnalysis:
+      modules = ["SemanticAnalyzerModule", "CompilerModule"]
+      output = code
+      gate = "Semantic analysis detects all required errors"
+
+    step ImplementCLI:
+      modules = ["CLIModule"]
+      output = code
+      gate = "CLI compiles files and displays output"
+
+    step ImplementMCP:
+      modules = ["MCPServerModule"]
+      output = code
+      gate = "MCP server provides all tools and resources"
+
+    step Testing:
+      modules = ["TestingModule"]
+      output = tests
+      gate = "All tests pass with >80% coverage"
+
+    step Documentation:
+      output = docs
+      gate = "README and docs complete and accurate"
+
+  pipeline "Release":
+    step ValidateTests:
+      modules = ["TestingModule"]
+      output = tests
+      gate = "All tests pass"
+
+    step BuildPackage:
+      output = code
+      gate = "Package builds successfully with uv"
+
+    step ValidateMCP:
+      modules = ["MCPServerModule"]
+      output = code
+      gate = "MCP server tested with real AI agents"
+
+    step PublishDocumentation:
+      output = docs
+      gate = "All documentation published and accessible"

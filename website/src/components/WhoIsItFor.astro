@@ -1,0 +1,67 @@
+---
+interface Audience {
+  name: string;
+  detail: string;
+}
+
+interface Props {
+  audiences?: Audience[];
+}
+
+const defaultAudiences: Audience[] = [
+  {
+    name: 'Cursor developers',
+    detail:
+      'Use SODL specs as Cursor rules context for precise, consistent code generation across your entire project.',
+  },
+  {
+    name: 'Claude users',
+    detail:
+      'Give Claude structured architectural intent instead of free-form prompts. Get reproducible, constraint-aware results.',
+  },
+  {
+    name: 'GPT builders',
+    detail:
+      'Chain GPT-4 calls through a validated pipeline with invariant checking and gate conditions — no more prompt guesswork.',
+  },
+];
+
+const { audiences = defaultAudiences } = Astro.props;
+
+const checkIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"/></svg>`;
+---
+
+<section class="px-6 py-20" aria-labelledby="audience-heading">
+  <div class="mx-auto max-w-4xl">
+    <div class="text-center mb-12">
+      <h2
+        id="audience-heading"
+        class="text-3xl font-bold text-white sm:text-4xl"
+      >
+        Built for AI-first developers
+      </h2>
+      <p class="mt-4 text-lg text-neutral-400">
+        Whether you use Cursor, Claude, or GPT — SODL gives your AI agent
+        the structure it needs to generate correct code.
+      </p>
+    </div>
+
+    <ul class="space-y-4 list-none p-0 m-0" role="list">
+      {audiences.map((audience) => (
+        <li
+          class="flex items-start gap-4 rounded-xl border border-neutral-800 bg-neutral-900/50 p-6 hover:border-indigo-500/30 hover:bg-indigo-950/20 transition-all duration-200"
+        >
+          <!-- Checkmark -->
+          <span class="mt-0.5 text-indigo-400">
+            <Fragment set:html={checkIcon} />
+          </span>
+          <!-- Content -->
+          <div>
+            <span class="font-semibold text-white">{audience.name}</span>
+            <span class="ml-2 text-neutral-400">{audience.detail}</span>
+          </div>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>

@@ -1,0 +1,18 @@
+system "ComprehensiveGenericTest":
+  version = "1.0.0"
+
+  intent:
+    primary = "Testing comprehensive generic type syntax support"
+
+  interface ComprehensiveTestInterface:
+    doc = "Interface for testing comprehensive generics"
+    method simple_type() -> String
+    method list_with_square() -> List<String>
+    method list_with_angle() -> List<String>
+    method optional_square() -> Optional<Int>
+    method optional_angle() -> Optional<Int>
+    method result_two_params() -> Result<Success, Error>
+    method complex_nested() -> Result<List<Item>, Error>
+    method triple_generic() -> Triple<A, B, C>
+    invariants:
+      invariant "Supports all forms of generic syntax"

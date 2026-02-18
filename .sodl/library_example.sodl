@@ -1,0 +1,95 @@
+system "LibraryManagementApp":
+  version = "1.0.0"
+  stack:
+    language = "Python 3.12"
+    web = "FastAPI"
+    database = "PostgreSQL"
+    orm = "SQLAlchemy"
+  
+  intent:
+    primary = "Manage a digital library"
+    outcomes = [
+      "Add new books with details (title, author, ISBN, etc.)",
+      "Search for books by title, author, or ISBN",
+      "View book details",
+      "Borrow and return books (with status tracking)"
+    ]
+    out_of_scope = ["User authentication", "Payment processing", "Mobile app"]
+
+  # Interfaces with methods + invariants
+  interface BookRepository:
+    doc = "Handles book data persistence"
+    method create(book: BookInput) -> Book
+    method get_by_id(id: UUID) -> Optional[Book]
+    method search(query: str) -> List[Book]
+    method get_all() -> List[Book]
+    method update(id: UUID, updates: BookUpdate) -> Book
+    method delete(id: UUID) -> bool
+    invariants:
+      invariant "Book IDs are unique"
+      invariant "ISBNs are globally unique"
+
+  interface LendingService:
+    doc = "Handles book lending and returns"
+    method borrow_book(book_id: UUID, user_id: UUID) -> BorrowedBook
+    method return_book(book_id: UUID, user_id: UUID) -> None
+    method get_borrowed_books(user_id: UUID) -> List[BorrowedBook]
+    invariants:
+      invariant "Borrowing cannot exceed book availability"
+      invariant "Returns must update book status correctly"
+
+  # ? FIXED: Concrete implementation modules added
+  module PostgresBookRepository:
+    implements = [BookRepository]
+    exports = [BookRepository]
+    artifacts = ["app/repositories/book_repo.py"]
+
+  module SimpleLendingService:
+    implements = [LendingService]
+    exports = [LendingService]
+    requires = [BookRepository]
+    artifacts = ["app/services/lending.py"]
+
+  # ? FIXED: Models moved to api blocks (no top-level models in v0.3)
+  module BookAPI:
+    requires = [BookRepository, LendingService]
+    api:
+      model Book:
+        field id: UUID
+        field title: str
+        field author: str
+        field isbn: str
+        field status: str (enum=["available", "borrowed", "reserved"])
+      
+      model BookInput:
+        field title: str
+        field author: str
+        field isbn: str
+      
+      model BookUpdate:
+        field title: Optional[str]
+        field author: Optional[str]
+        field isbn: Optional[str]
+        field status: Optional[str] (enum=["available", "borrowed", "reserved"])
+      
+      model BorrowedBook:
+        field book_id: UUID
+        field user_id: UUID
+        field borrow_date: datetime
+        field return_date: Optional[datetime]
+        field status: str (enum=["available", "borrowed", "reserved"])
+      
+      endpoint "POST /api/books" -> Book (201 CREATED)
+      endpoint "GET /api/books" -> List[Book]
+      endpoint "GET /api/books/{id}" -> Book
+      endpoint "POST /api/lending/borrow" -> BorrowedBook
+      endpoint "POST /api/lending/return" -> Empty (204 NO CONTENT)
+    
+    artifacts = ["app/api.py"]
+
+  # Pipeline references concrete modules only
+  pipeline "Build":
+    step Implement:
+      modules = ["PostgresBookRepository", "SimpleLendingService", "BookAPI"]
+      output = code
+      gate = "Tests pass"

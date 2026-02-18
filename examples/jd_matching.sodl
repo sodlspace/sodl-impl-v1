@@ -1,0 +1,229 @@
+system "JDMatchingATS":
+  version = "1.0.0"
+  stack:
+    language = "Python 3.12"
+    ui_framework = "Streamlit"
+    ai_service = "AWS Bedrock"
+    ai_model = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+    pdf_processing = "PyPDF2"
+    environment = "dotenv"
+
+  intent:
+    primary = "AI-powered ATS resume analyzer that matches candidate resumes against job descriptions"
+    outcomes = [
+      "Upload PDF resumes and extract text content",
+      "Parse job descriptions provided by users",
+      "Use Claude AI to calculate match percentage between resume and JD",
+      "Identify missing keywords in candidate resume",
+      "Provide actionable tips to improve resume alignment",
+      "Suggest interview focus areas for candidates"
+    ]
+    out_of_scope = [
+      "Resume creation or editing",
+      "Job posting management",
+      "Candidate database storage",
+      "Multi-user authentication",
+      "Historical analysis tracking",
+      "Batch resume processing"
+    ]
+  policy Security:
+    rule "AWS credentials stored in .env file only" severity=critical
+    rule "No secrets committed to repository" severity=critical
+    rule "Validate PDF file uploads for malicious content" severity=high
+    rule "Sanitize user input from job description textarea" severity=high
+
+  policy DataPrivacy:
+    rule "Resume data processed in memory only" severity=critical
+    rule "No persistent storage of candidate information" severity=critical
+    rule "AWS Bedrock region compliance maintained" severity=high
+
+  policy AIGovernance:
+    rule "Temperature set low (0.1) for consistent evaluations" severity=high
+    rule "Token limits enforced (max 3000 tokens)" severity=medium
+    rule "Prompt engineering maintains objectivity" severity=high
+    rule "Top_p parameter optimized for deterministic outputs" severity=medium
+
+  interface ResumeProcessor:
+    doc = "Handles PDF resume extraction and text processing"
+    method extract_text_from_pdf(uploaded_file: FileUpload) -> str
+    invariants:
+      invariant "Returns clean UTF-8 encoded text"
+      invariant "Handles multi-page PDFs correctly"
+      invariant "Preserves formatting context for analysis"
+
+  interface AIEvaluator:
+    doc = "Interfaces with AWS Bedrock for resume evaluation"
+    method evaluate_resume(resume_text: str, job_description: str) -> EvaluationResponse
+    method configure_client(region: str, model_id: str) -> BedrockClient
+    invariants:
+      invariant "Uses structured prompt template for consistency"
+      invariant "Returns evaluation with match percentage"
+      invariant "Provides missing keywords analysis"
+      invariant "Generates actionable recommendations"
+
+  interface UIController:
+    doc = "Manages Streamlit user interface and interactions"
+    method render_upload_section() -> UploadedFile
+    method render_jd_input() -> str
+    method display_evaluation(result: EvaluationResponse) -> None
+    invariants:
+      invariant "Job description textarea supports 500 character height"
+      invariant "Only PDF files accepted for upload"
+      invariant "Submit button triggers evaluation workflow"
+
+  module PDFExtractor:
+    implements = [ResumeProcessor]
+    exports = [ResumeProcessor]
+    owns = ["PDF text extraction", "Multi-page processing"]
+    config:
+      library = "PyPDF2"
+      encoding = "UTF-8"
+    invariants:
+      invariant "Concatenates all pages into single text string"
+      invariant "Handles corrupted PDFs gracefully"
+      invariant "Maintains text order from PDF layout"
+    acceptance:
+      test "extracts text from single-page resume"
+      test "extracts text from multi-page resume"
+      test "handles PDF with images and mixed content"
+      test "returns empty string for unreadable PDFs"
+    artifacts = ["main.py"]
+
+  module BedrockEvaluator:
+    implements = [AIEvaluator]
+    exports = [AIEvaluator]
+    owns = ["AWS Bedrock integration", "Prompt engineering", "Response parsing"]
+    config:
+      region = "us-east-1"
+      model_id = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+      max_tokens = "3000"
+      temperature = "0.1"
+      top_p = "0.15"
+    invariants:
+      invariant "Client initialized with boto3.client('bedrock-runtime')"
+      invariant "Uses converse API for model invocation"
+      invariant "Prompt template includes all evaluation criteria"
+      invariant "Returns structured evaluation output"
+    acceptance:
+      test "successfully connects to AWS Bedrock"
+      test "sends resume and JD to Claude model"
+      test "receives match percentage in response"
+      test "receives missing keywords list"
+      test "receives improvement tips"
+      test "receives interview focus suggestions"
+    artifacts = ["main.py"]
+
+  module PromptManager:
+    owns = ["Evaluation prompt template", "Prompt formatting"]
+    api:
+      model PromptTemplate:
+        field system_context: str
+        field evaluation_criteria: List[str]
+        field output_format: List[str]
+        field resume_placeholder: str
+        field jd_placeholder: str
+    invariants:
+      invariant "Prompt defines ATS expert persona"
+      invariant "Requests 4 specific outputs: match %, keywords, tips, interview focus"
+      invariant "Uses structured format with numbered sections"
+      invariant "Maintains objectivity and precision requirements"
+    acceptance:
+      test "prompt generates consistent match percentages"
+      test "prompt identifies relevant missing keywords"
+      test "prompt provides actionable recommendations"
+    artifacts = ["main.py"]
+
+  module StreamlitUI:
+    implements = [UIController]
+    exports = [UIController]
+    owns = ["User interface", "File upload handling", "Result display"]
+    requires = [ResumeProcessor, AIEvaluator]
+    api:
+      model UIComponent:
+        field component_type: str
+        field label: str
+        field description: str
+      
+      endpoint "GET /ui/title" -> UIComponent
+      endpoint "POST /ui/job-description" -> str
+      endpoint "POST /ui/resume-upload" -> FileUpload
+      endpoint "POST /ui/submit-evaluation" -> EvaluationResponse
+      endpoint "GET /ui/results" -> EvaluationResponse
+    invariants:
+      invariant "Title displays 'Intelligent Solutions Smart ATS'"
+      invariant "Helper text shows 'Improve your ATS resume score Match'"
+      invariant "File uploader restricted to PDF type"
+      invariant "Submit button labeled 'Check Your Score'"
+      invariant "Results display only after successful evaluation"
+    acceptance:
+      test "renders UI components in correct order"
+      test "accepts valid PDF upload"
+      test "rejects non-PDF file uploads"
+      test "validates job description is not empty"
+      test "displays evaluation results after processing"
+      test "handles errors gracefully with user feedback"
+    artifacts = ["main.py"]
+
+  module ConfigManager:
+    owns = ["Environment configuration", "AWS credentials loading"]
+    config:
+      env_file = ".env"
+      required_var_1 = "AWS_ACCESS_KEY_ID"
+      required_var_2 = "AWS_SECRET_ACCESS_KEY"
+    invariants:
+      invariant "Loads environment variables at startup"
+      invariant "AWS credentials never hardcoded"
+      invariant ".env file in .gitignore"
+    acceptance:
+      test "successfully loads .env file"
+      test "AWS credentials available to boto3"
+    artifacts = ["main.py", ".env"]
+
+  module DataModels:
+    owns = ["Data structures for evaluation"]
+    api:
+      model EvaluationResponse:
+        field match_percentage: float
+        field explanation: str
+        field missing_keywords: List[str]
+        field improvement_tips: List[str]
+        field interview_focus_areas: List[str]
+
+      model FileUpload:
+        field filename: str
+        field content_type: str
+        field file_buffer: bytes
+    artifacts = ["main.py"]
+
+  pipeline "Development":
+    step Setup:
+      output = design
+      require = "Define architecture with AWS Bedrock integration flow"
+
+    step ImplementCore:
+      modules = ["ConfigManager", "DataModels", "PDFExtractor"]
+      output = code
+      require = "Implement foundation modules first"
+      gate = "PDF extraction works correctly"
+
+    step ImplementAI:
+      modules = ["PromptManager", "BedrockEvaluator"]
+      output = code
+      require = "Integrate AWS Bedrock with structured prompt"
+      gate = "AI evaluation returns valid responses"
+
+    step ImplementUI:
+      modules = ["StreamlitUI"]
+      output = code
+      require = "Build Streamlit interface connecting all components"
+      gate = "End-to-end workflow functional"
+
+    step Testing:
+      output = tests
+      require = "Test with sample resumes and job descriptions"
+      gate = "All acceptance criteria met"
+
+    step Documentation:
+      output = docs
+      require = "Document setup steps and usage instructions"
+      gate = "README complete with AWS setup guide"

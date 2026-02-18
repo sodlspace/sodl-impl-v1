@@ -1,0 +1,146 @@
+system "AdvancedTodoApp":
+  version = "1.0.0"
+  stack:
+    language = "Python 3.12"
+    web = "FastAPI"
+    templating = "Jinja2"
+    ui_framework = "Material Components Web"
+  intent:
+    primary = "Provide a full-featured, web-based Todo list with rich UI and persistent storage"
+    outcomes = [
+      "Users can create, read, update, and delete todos",
+      "Todos support categories, due dates, priority levels, and completion status",
+      "Responsive HTML frontend rendered via Jinja2 templates",
+      "RESTful JSON API available alongside server-rendered pages",
+      "Modern industrial UI following Material Design principles"
+    ]
+    out_of_scope = ["User authentication", "Real-time sync", "Mobile app"]
+
+interface TodoStore:
+  doc = "Persistent storage for advanced todo items"
+  method create(todo: TodoInput) -> TodoItem
+  method get_all() -> List[TodoItem]
+  method get_by_id(id: UUID) -> Optional[TodoItem]
+  method update(id: UUID, updates: TodoUpdate) -> TodoItem
+  method delete(id: UUID) -> bool
+  invariants:
+    invariant "All todos have unique UUIDs"
+    invariant "Due date may be null"
+
+module WebUI:
+  owns = ["Todo listing page", "Todo creation form", "Task management interface"]
+  requires = [TodoStore]
+  api:
+    endpoint "GET /" -> HTML (via Jinja2)
+    endpoint "POST /todos" -> Redirect to "/"
+    endpoint "POST /todos/{id}/toggle" -> Redirect to "/"
+    endpoint "POST /todos/{id}/delete" -> Redirect to "/"
+  invariants:
+    invariant "All forms validate client-side and server-side"
+    invariant "UI reflects current todo state without full reload where possible"
+    invariant "Material Design components are properly initialized"
+  acceptance:
+    test "renders empty state when no todos exist"
+    test "submits valid todo and displays it"
+    test "shows error on invalid due date"
+    test "toggles completion status correctly"
+    test "deletes todo and updates UI"
+  artifacts = ["app/main.py", "app/templates/*.html", "app/static/css/style.css"]
+
+module TodoAPI:
+  owns = ["REST API for todos"]
+  requires = [TodoStore]
+  api:
+    endpoint "GET /api/todos" -> List[TodoResponse]
+    endpoint "POST /api/todos" -> TodoResponse (201 CREATED)
+    endpoint "PUT /api/todos/{id}" -> TodoResponse
+    endpoint "DELETE /api/todos/{id}" -> Empty (204 NO CONTENT)
+  invariants:
+    invariant "All API responses use consistent JSON schema"
+    invariant "Invalid inputs return 422 with error details"
+    invariant "API endpoints follow RESTful conventions"
+  acceptance:
+    test "creates todo via POST /api/todos with valid payload"
+    test "returns 404 for non-existent todo ID"
+    test "updates todo via PUT /api/todos/{id}"
+    test "deletes todo via DELETE /api/todos/{id}"
+  artifacts = ["app/api.py"]
+
+module InMemoryTodoStore:
+  implements = [TodoStore]
+  exports = [TodoStore]
+  config:
+    persistence = "in-memory (ephemeral)"
+  invariants:
+    invariant "Thread-safe access to todo list"
+    invariant "All operations maintain data consistency"
+  acceptance:
+    test "persists todo across GET calls within same runtime"
+    test "correctly creates new todos with unique IDs"
+    test "properly updates existing todos"
+    test "successfully deletes todos"
+  artifacts = ["app/storage.py"]
+
+module StorageModels:
+  owns = ["Data models for todo items"]
+  api:
+    model TodoItem:
+      field id: UUID
+      field title: str
+      field description: Optional[str]
+      field category: Optional[str]
+      field due_date: Optional[datetime]
+      field priority: int (1-3)
+      field completed: bool
+    model TodoInput:
+      field title: str
+      field description: Optional[str]
+      field category: Optional[str]
+      field due_date: Optional[str]
+      field priority: int (1-3)
+    model TodoUpdate:
+      field title: Optional[str]
+      field description: Optional[str]
+      field category: Optional[str]
+      field due_date: Optional[str]
+      field priority: Optional[int]
+      field completed: Optional[bool]
+  artifacts = ["app/storage.py"]
+
+module APISchemas:
+  owns = ["Pydantic models for API validation"]
+  api:
+    model TodoCreateRequest:
+      field title: str
+      field description: Optional[str]
+      field category: Optional[str]
+      field due_date: Optional[str]
+      field priority: int (ge=1, le=3)
+    model TodoUpdateRequest:
+      field title: Optional[str]
+      field description: Optional[str]
+      field category: Optional[str]
+      field due_date: Optional[str]
+      field priority: Optional[int] (ge=1, le=3)
+      field completed: Optional[bool]
+    model TodoResponse:
+      field id: UUID
+      field title: str
+      field description: Optional[str]
+      field category: Optional[str]
+      field due_date: Optional[str]
+      field priority: int
+      field completed: bool
+  artifacts = ["app/api.py"]
+
+pipeline "Development":
+  step Design:
+    output = design
+    require = "Produce architecture diagram and data model"
+  step Implement:
+    modules = ["StorageModels", "APISchemas", "InMemoryTodoStore", "TodoAPI", "WebUI"]
+    output = code
+    gate = "All acceptance tests pass"
+  step Review:
+    output = diff
+    require = "Ensure Jinja2 templates use base.html layout and Material Design components are properly initialized"

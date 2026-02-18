@@ -1,0 +1,100 @@
+---
+interface Stage {
+  label: string;
+  description: string;
+}
+
+interface Props {
+  stages?: Stage[];
+}
+
+const defaultStages: Stage[] = [
+  {
+    label: 'Intent',
+    description: 'Define what you are building and why — the primary goal, outcomes, and what is explicitly out of scope.',
+  },
+  {
+    label: 'Architecture',
+    description: 'Specify the structure: stack, interfaces, modules, and how components interact.',
+  },
+  {
+    label: 'Constraints',
+    description: 'Enforce invariants, policies, and rules that AI must never violate during generation.',
+  },
+  {
+    label: 'Generation',
+    description: 'AI produces the right code every time — guided by structured spec, not free-form prompts.',
+  },
+];
+
+const { stages = defaultStages } = Astro.props;
+---
+
+<section
+  class="border-y border-neutral-800 bg-neutral-900/50 px-6 py-20"
+  aria-labelledby="pipeline-heading"
+>
+  <div class="mx-auto max-w-7xl">
+    <div class="text-center mb-12">
+      <h2
+        id="pipeline-heading"
+        class="text-3xl font-bold text-white sm:text-4xl"
+      >
+        How SODL works
+      </h2>
+      <p class="mt-4 text-lg text-neutral-400">
+        A four-stage pipeline that transforms vague intent into precise AI generation.
+      </p>
+    </div>
+
+    <!-- Scrollable pipeline -->
+    <div class="overflow-x-auto pb-4" role="list" aria-label="SODL pipeline stages">
+      <div class="flex min-w-max items-start gap-0 mx-auto justify-center">
+        {stages.map((stage, index) => (
+          <div class="flex items-start" role="listitem">
+            <!-- Stage box -->
+            <div class="w-56 flex-shrink-0">
+              <div class="rounded-xl border border-indigo-500/30 bg-indigo-950/40 p-6 text-center hover:border-indigo-500/60 transition-colors">
+                <!-- Step number -->
+                <div
+                  class="mx-auto mb-3 flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white"
+                  aria-hidden="true"
+                >
+                  {index + 1}
+                </div>
+                <!-- Label -->
+                <h3 class="mb-2 text-base font-bold text-indigo-400">
+                  {stage.label}
+                </h3>
+                <!-- Description -->
+                <p class="text-xs leading-relaxed text-neutral-400">
+                  {stage.description}
+                </p>
+              </div>
+            </div>
+
+            <!-- Arrow separator (not after last) -->
+            {index < stages.length - 1 && (
+              <div
+                class="flex-shrink-0 flex items-center justify-center w-12 pt-10"
+                aria-hidden="true"
+              >
+                <svg
+                  class="h-5 w-5 text-indigo-500/60"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,4 @@
+# SODL MCP Server - Runtime Dependencies
+# For development dependencies, use: pip install -e ".[dev]"
+
+mcp>=1.0.0

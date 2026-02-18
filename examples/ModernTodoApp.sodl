@@ -1,0 +1,267 @@
+system "ModernTodoApp":
+  version = "1.0.0"
+  stack:
+    language = "Python 3.12"
+    web = "Flask 3.0"
+    database = "SQLite"
+    templating = "Jinja2"
+    frontend = "Bootstrap 5.3"
+    orm = "SQLAlchemy"
+  intent:
+    primary = "Modern responsive todo list application with Jinja2 templates and fancy Bootstrap 5 UI for complex task management"
+    outcomes = [
+      "Create read update delete todos with rich metadata priority levels categories and subtasks",
+      "Advanced filtering search and sorting functionality with multiple criteria",
+      "Modern fancy UI with smooth animations transitions and Bootstrap 5 components",
+      "Mobile-responsive design that works beautifully on all screen sizes",
+      "Statistics dashboard with progress tracking charts and recent activity",
+      "Dark and light theme toggle with localStorage persistence",
+      "Bulk operations for efficient task management",
+      "Tag-based organization and due date tracking with overdue notifications"
+    ]
+    out_of_scope = ["Multi-user authentication", "Real-time collaboration", "Cloud synchronization"]
+
+  interface TodoRepository:
+    doc = "Repository for todo CRUD operations and queries"
+    method create(todo: TodoInput) -> Todo
+    method get_by_id(id: int) -> Optional[Todo]
+    method get_all(filters: TodoFilters, page: int, limit: int) -> List[Todo]
+    method get_by_priority(priority: str) -> List[Todo]
+    method get_by_category(category_id: int) -> List[Todo]
+    method get_overdue() -> List[Todo]
+    method search(query: str) -> List[Todo]
+    method update(id: int, updates: TodoUpdate) -> Todo
+    method delete(id: int) -> bool
+    method toggle_complete(id: int) -> Todo
+    method archive(id: int) -> Todo
+    method bulk_delete(ids: List[int]) -> int
+    method bulk_complete(ids: List[int]) -> int
+    invariants:
+      invariant "All todos have unique auto-increment IDs"
+      invariant "Timestamps stored in UTC"
+
+  interface CategoryRepository:
+    doc = "Repository for category management"
+    method create(category: CategoryInput) -> Category
+    method get_all() -> List[Category]
+    method get_by_id(id: int) -> Optional[Category]
+    invariants:
+      invariant "Category names are unique"
+
+  interface TagRepository:
+    doc = "Repository for tag management"
+    method create(tag: TagInput) -> Tag
+    method get_all() -> List[Tag]
+    method get_popular(limit: int) -> List[Tag]
+
+  interface SubtaskRepository:
+    doc = "Repository for subtask operations"
+    method create(subtask: SubtaskInput) -> Subtask
+    method get_by_todo(todo_id: int) -> List[Subtask]
+    method toggle_complete(id: int) -> Subtask
+
+  interface StatisticsService:
+    doc = "Service for calculating statistics"
+    method get_overview() -> Statistics
+    method get_completion_rate() -> float
+    method get_priority_distribution() -> Dict
+    method get_category_breakdown() -> Dict
+
+  module TodoWebUI:
+    requires = [TodoRepository, CategoryRepository, TagRepository, StatisticsService]
+    owns = ["Main todo list view with filtering", "Statistics dashboard", "Completed and archived views"]
+    api:
+      endpoint "GET /" -> HTML
+      endpoint "GET /dashboard" -> HTML
+      endpoint "GET /completed" -> HTML
+      endpoint "GET /archived" -> HTML
+    invariants:
+      invariant "All forms include CSRF tokens"
+      invariant "Templates extend base.html for DRY"
+      invariant "Bootstrap 5 components used throughout"
+    acceptance:
+      test "displays todos in Bootstrap card layout"
+      test "shows filter sidebar"
+      test "displays statistics dashboard"
+    artifacts = [
+      "app/routes/main.py",
+      "app/templates/base.html",
+      "app/templates/index.html",
+      "app/templates/dashboard.html"
+    ]
+
+  module TodoAPI:
+    requires = [TodoRepository, SubtaskRepository]
+    owns = ["REST API for todos", "Bulk operations", "JSON responses"]
+    api:
+      endpoint "GET /api/todos" -> List[TodoResponse]
+      endpoint "POST /api/todos" -> TodoResponse (201)
+      endpoint "GET /api/todos/{id}" -> TodoResponse
+      endpoint "PUT /api/todos/{id}" -> TodoResponse
+      endpoint "DELETE /api/todos/{id}" -> Empty (204)
+      endpoint "PATCH /api/todos/{id}/complete" -> TodoResponse
+      endpoint "POST /api/todos/bulk-delete" -> BulkResponse
+      endpoint "GET /api/categories" -> List[CategoryResponse]
+      endpoint "GET /api/tags" -> List[TagResponse]
+      endpoint "GET /api/statistics" -> StatisticsResponse
+    invariants:
+      invariant "Return proper HTTP status codes"
+      invariant "Validate all input with Flask-WTF"
+    acceptance:
+      test "creates todo with valid data"
+      test "returns 400 for invalid input"
+      test "returns 404 for non-existent todo"
+    artifacts = [
+      "app/routes/api.py",
+      "app/routes/todo_routes.py"
+    ]
+
+  module TodoComponents:
+    owns = [
+      "Todo card component with Bootstrap styling",
+      "Todo form modal",
+      "Filter sidebar",
+      "Statistics panel",
+      "Form macros",
+      "Button and alert macros"
+    ]
+    invariants:
+      invariant "All components use template inheritance"
+      invariant "Bootstrap 5 classes for styling"
+    artifacts = [
+      "app/templates/components/todo_card.html",
+      "app/templates/components/todo_form_modal.html",
+      "app/templates/components/filter_sidebar.html",
+      "app/templates/components/statistics_panel.html",
+      "app/templates/macros/forms.html",
+      "app/templates/macros/buttons.html"
+    ]
+
+  module TodoDataLayer:
+    implements = [TodoRepository, CategoryRepository, TagRepository, SubtaskRepository]
+    exports = [TodoRepository, CategoryRepository, TagRepository, SubtaskRepository]
+    owns = ["SQLAlchemy ORM models", "Database operations"]
+    invariants:
+      invariant "All timestamps stored in UTC"
+      invariant "Use database transactions"
+      invariant "Cascade delete for related entities"
+    acceptance:
+      test "creates todo with subtasks"
+      test "filters todos by multiple criteria"
+      test "handles pagination correctly"
+    artifacts = [
+      "app/models/todo.py",
+      "app/models/category.py",
+      "app/models/tag.py",
+      "app/models/subtask.py"
+    ]
+
+  module TodoStatistics:
+    implements = [StatisticsService]
+    exports = [StatisticsService]
+    requires = [TodoRepository, CategoryRepository]
+    owns = ["Statistics calculations", "Activity tracking"]
+    invariants:
+      invariant "Cache statistics for 5 minutes"
+      invariant "Use database aggregation"
+    artifacts = [
+      "app/services/statistics.py"
+    ]
+
+  module TodoFrontend:
+    owns = [
+      "App initialization",
+      "Todo CRUD with Fetch API",
+      "Filter and search",
+      "Theme switching",
+      "Animations"
+    ]
+    invariants:
+      invariant "Use Fetch API for AJAX"
+      invariant "Debounce search by 300ms"
+      invariant "Store theme in localStorage"
+    acceptance:
+      test "toggles theme without reload"
+      test "filters todos with AJAX"
+      test "shows toast notifications"
+    artifacts = [
+      "app/static/js/app.js",
+      "app/static/js/todo.js",
+      "app/static/js/filters.js",
+      "app/static/js/theme.js",
+      "app/static/js/animations.js"
+    ]
+
+  module TodoStyling:
+    owns = [
+      "CSS variables for theming",
+      "Dark and light themes",
+      "CSS animations",
+      "Bootstrap overrides"
+    ]
+    invariants:
+      invariant "Use CSS custom properties"
+      invariant "Mobile-first responsive design"
+    artifacts = [
+      "app/static/css/styles.css",
+      "app/static/css/themes.css"
+    ]
+
+  module TodoForms:
+    owns = ["Flask-WTF form classes", "Validation rules"]
+    invariants:
+      invariant "All forms include CSRF protection"
+      invariant "Validate data types and ranges"
+    artifacts = [
+      "app/forms/todo_form.py",
+      "app/forms/filter_form.py"
+    ]
+
+  pipeline "Development":
+    step ImplementModels:
+      modules = ["TodoDataLayer"]
+      output = code
+      require = "Define SQLAlchemy models with proper relationships constraints and indexes"
+      gate = "Models pass unit tests"
+
+    step ImplementStatistics:
+      modules = ["TodoStatistics"]
+      output = code
+      require = "Calculate statistics with efficient database aggregation queries"
+      gate = "Statistics calculations accurate and performant"
+
+    step ImplementAPI:
+      modules = ["TodoAPI"]
+      output = code
+      require = "RESTful API endpoints with proper validation and error handling"
+      gate = "API integration tests pass"
+
+    step ImplementForms:
+      modules = ["TodoForms"]
+      output = code
+      require = "WTForms with client and server side validation"
+      gate = "Form validation works correctly"
+
+    step ImplementComponents:
+      modules = ["TodoComponents"]
+      output = code
+      require = "Reusable Jinja2 components and macros with Bootstrap 5 styling"
+      gate = "Components render correctly and are reusable"
+
+    step ImplementViews:
+      modules = ["TodoWebUI"]
+      output = code
+      require = "Flask routes with Jinja2 templates for all pages"
+      gate = "All pages render correctly with proper data"
+
+    step ImplementFrontend:
+      modules = ["TodoFrontend"]
+      output = code
+      require = "JavaScript modules for interactivity animations and AJAX operations"
+      gate = "All frontend features work including theme toggle and animations"
+
+    step ImplementStyling:
+      modules = ["TodoStyling"]
+      output = code
+      require = "Custom CSS with Bootstrap 5 overrides fancy UI and dark light themes"
+      gate = "UI is modern fancy and fully responsive on all devices"
