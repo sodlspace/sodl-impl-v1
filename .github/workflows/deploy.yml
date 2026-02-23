@@ -15,6 +15,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
+      - name: Create CNAME file
+        run: echo "sodl.space" > ./website/dist/CNAME
+      
       - uses: withastro/action@v3
         with:
           path: website
@@ -26,9 +30,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Add CNAME file
-        run: echo "sodl.space" > ./dist/CNAME
-      
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
