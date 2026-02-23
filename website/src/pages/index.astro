@@ -5,6 +5,7 @@ import FeatureGrid from '../components/FeatureGrid.astro';
 import PhilosophyStrip from '../components/PhilosophyStrip.astro';
 import WhoIsItFor from '../components/WhoIsItFor.astro';
 import CodePreview from '../components/CodePreview.astro';
+import ChaptersGrid from '../components/ChaptersGrid.astro';
 import SiteFooter from '../components/SiteFooter.astro';
 
 const exampleCode = `# Reusable base for Astro/Tailwind sites
@@ -139,6 +140,8 @@ system "MySite" extends "AstroSiteBase":
           </div>
         </div>
       </section>
+      <!-- Browse all docs -->
+      <ChaptersGrid />
     </main>
 
     <SiteFooter />
