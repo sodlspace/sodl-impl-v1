@@ -67,8 +67,20 @@ The `pipeline` construct orchestrates multi-step generation with explicit gates 
 
 SODL is designed specifically for AI code generation — not for humans to read, not for machines to execute, but for AI agents to understand and act on.
 
+## Where SODL delivers the most value
+
+Some workflows benefit more than others. SODL is especially effective when:
+
+- **Building a REST API** — `policy Security` rules enforce auth, validation, and error handling before any endpoint is generated. See [REST API use case](/use-cases/#rest-api-development).
+- **Scaffolding a microservice** — `interface` contracts define exactly what each service must implement, preventing implicit coupling. See [microservices use case](/use-cases/#microservices).
+- **Running a data pipeline** — pipeline `step` blocks map to ETL stages, and `gate` criteria ensure each stage is proven before the next runs. See [data pipeline use case](/use-cases/#data-pipelines-etl).
+- **Working on an existing codebase** — `out_of_scope` keeps the AI from refactoring things you didn't ask it to touch. See [brownfield use case](/use-cases/#brownfield--incremental-refactoring).
+
+For the full breakdown of where SODL excels, see [Use Cases](/use-cases/).
+
 ## Who benefits most
 
-- **Teams using Cursor** who want consistent AI outputs across developers
-- **Developers building with Claude or GPT** who want reproducible results
-- **Architects** who want to encode decisions once and enforce them everywhere
+- **Teams using Cursor** who want consistent AI outputs across developers and sessions
+- **Developers building with Claude or GPT** who want reproducible, constraint-aware results
+- **Architects** who want to encode design decisions once and enforce them everywhere
+- **Anyone who has re-explained their tech stack to an AI more than twice**

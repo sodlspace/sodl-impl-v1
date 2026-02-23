@@ -3,7 +3,7 @@ title: Language Reference
 description: Complete reference for the SODL language constructs.
 ---
 
-SODL has five top-level constructs: `template`, `system`, `interface`, `module`, and `pipeline`.
+SODL has six top-level constructs: `template`, `system`, `interface`, `module`, `policy`, and `pipeline`.
 
 All constructs support nested blocks for configuration, constraints, and documentation.
 
@@ -13,9 +13,12 @@ All constructs support nested blocks for configuration, constraints, and documen
 |---|---|
 | `template` | Reusable base with shared stack and policies |
 | `system` | Main system definition; extends a template |
-| `interface` | Data contracts and component contracts |
+| `interface` | Data contracts and method signatures |
 | `module` | Groups related functionality with ownership |
+| `policy` | Enforceable rules with severity levels |
 | `pipeline` | Ordered steps for code generation or deployment |
+
+`step` is a block nested inside `pipeline`, not a top-level construct.
 
 ## File structure
 
@@ -54,3 +57,4 @@ See the detailed pages for each construct:
 
 - [Syntax reference](/language/syntax/)
 - [Constructs in depth](/language/constructs/)
+- [Compiler & output](/language/compiler-output/)
