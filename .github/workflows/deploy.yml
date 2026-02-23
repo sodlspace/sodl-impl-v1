@@ -21,13 +21,13 @@ jobs:
           path: website
       
       - name: Add CNAME file
-        run: echo "sodl.space" > ./dist/CNAME
+        run: echo "sodl.space" > ./website/dist/CNAME
       
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: github-pages
-          path: ./dist
+          path: ./website/dist
 
   deploy:
     needs: build
