@@ -12,7 +12,8 @@ const sodlGrammar = JSON.parse(
 );
 
 export default defineConfig({
-  site: 'https://sodl.space',
+  site: 'https://sodlspace.github.io',
+  base: '/sodl-impl-v1/',
   vite: {
     plugins: [tailwindcss()],
   },
