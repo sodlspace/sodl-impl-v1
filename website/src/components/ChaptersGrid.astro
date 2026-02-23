@@ -6,55 +6,57 @@ interface Chapter {
   badge?: string;
 }
 
+const base = import.meta.env.BASE_URL;
+
 const chapters: Chapter[] = [
   {
     label: 'Getting Started',
-    href: '/getting-started/',
+    href: `${base}getting-started/`,
     description: 'Install, write your first spec, and run the compiler.',
   },
   {
     label: 'Why SODL',
-    href: '/why-sodl/',
+    href: `${base}why-sodl/`,
     description: 'The problem with free-form prompts and how structured specs fix it.',
   },
   {
     label: 'Use Cases',
-    href: '/use-cases/',
+    href: `${base}use-cases/`,
     description: 'Where SODL is especially effective — REST APIs, microservices, data pipelines, and more.',
   },
   {
     label: 'Language Reference',
-    href: '/language/',
+    href: `${base}language/`,
     description: 'Six top-level constructs, file structure, and links to detailed pages.',
   },
   {
     label: 'Syntax',
-    href: '/language/syntax/',
+    href: `${base}language/syntax/`,
     description: 'Types, blocks, policy rules, pipeline output values, and naming conventions.',
   },
   {
     label: 'Constructs',
-    href: '/language/constructs/',
+    href: `${base}language/constructs/`,
     description: 'Detailed reference for template, system, interface, module, policy, and pipeline.',
   },
   {
     label: 'Compiler & Output',
-    href: '/language/compiler-output/',
+    href: `${base}language/compiler-output/`,
     description: 'How sodl compile works today and the planned structured output format.',
   },
   {
     label: 'Examples',
-    href: '/examples/',
+    href: `${base}examples/`,
     description: '17+ complete specs across web apps, REST APIs, microservices, CLI tools, and more.',
   },
   {
     label: 'Best Practices',
-    href: '/best-practices/',
+    href: `${base}best-practices/`,
     description: 'Module design, policy writing, acceptance tests, pipelines, and a pre-compile checklist.',
   },
   {
     label: 'Contact',
-    href: '/contact/',
+    href: `${base}contact/`,
     description: 'GitHub repository, email, and project status.',
   },
 ];

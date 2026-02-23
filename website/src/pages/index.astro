@@ -8,6 +8,8 @@ import CodePreview from '../components/CodePreview.astro';
 import ChaptersGrid from '../components/ChaptersGrid.astro';
 import SiteFooter from '../components/SiteFooter.astro';
 
+const base = import.meta.env.BASE_URL;
+
 const exampleCode = `# Reusable base for Astro/Tailwind sites
 template "AstroSiteBase":
   stack:
@@ -75,7 +77,7 @@ system "MySite" extends "AstroSiteBase":
     <meta name="twitter:image" content="https://sodl.space/og-card.png" />
     <!-- Sitemap / canonical -->
     <link rel="canonical" href="https://sodl.space/" />
-    <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="sitemap" href={`${base}sitemap-index.xml`} />
     <!-- Styles -->
     <style>
       @import "../styles/global.css";
@@ -92,7 +94,7 @@ system "MySite" extends "AstroSiteBase":
         subtitle="SODL gives AI agents structured intent, constraints, and architectural decisions — so they generate the right code, every time."
         primaryCTA="Get Started"
         secondaryCTA="View on GitHub"
-        primaryCTAHref="/getting-started/"
+        primaryCTAHref={`${base}getting-started/`}
         secondaryCTAHref="https://github.com/sodlspace/sodl-impl-v1"
       />
 
@@ -129,7 +131,7 @@ system "MySite" extends "AstroSiteBase":
 
           <div class="mt-8 flex justify-center">
             <a
-              href="/getting-started/"
+              href={`${base}getting-started/`}
               class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
             >
               Write your first spec

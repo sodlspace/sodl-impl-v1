@@ -5,13 +5,15 @@ interface Props {
 
 const { currentPath = '/' } = Astro.props;
 
+const base = import.meta.env.BASE_URL;
+
 const navLinks = [
-  { label: 'Getting Started', href: '/getting-started/' },
-  { label: 'Why SODL',        href: '/why-sodl/' },
-  { label: 'Use Cases',       href: '/use-cases/' },
-  { label: 'Reference',       href: '/language/' },
-  { label: 'Examples',        href: '/examples/' },
-  { label: 'Best Practices',  href: '/best-practices/' },
+  { label: 'Getting Started', href: `${base}getting-started/` },
+  { label: 'Why SODL',        href: `${base}why-sodl/` },
+  { label: 'Use Cases',       href: `${base}use-cases/` },
+  { label: 'Reference',       href: `${base}language/` },
+  { label: 'Examples',        href: `${base}examples/` },
+  { label: 'Best Practices',  href: `${base}best-practices/` },
 ];
 ---
 
@@ -25,7 +27,7 @@ const navLinks = [
   >
     <!-- Logo -->
     <a
-      href="/"
+      href={base}
       class="flex items-center gap-2 text-xl font-bold text-white hover:text-indigo-400 transition-colors"
       aria-label="SODL — home"
     >

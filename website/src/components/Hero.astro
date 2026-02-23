@@ -8,12 +8,14 @@ interface Props {
   secondaryCTAHref?: string;
 }
 
+const base = import.meta.env.BASE_URL;
+
 const {
   tagline,
   subtitle,
   primaryCTA,
   secondaryCTA,
-  primaryCTAHref = '/getting-started/',
+  primaryCTAHref = `${base}getting-started/`,
   secondaryCTAHref = 'https://github.com/sodlspace/sodl-impl-v1',
 } = Astro.props;
 
