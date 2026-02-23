@@ -19,11 +19,15 @@ const defaultStages: Stage[] = [
   },
   {
     label: 'Constraints',
-    description: 'Enforce invariants, policies, and rules that AI must never violate during generation.',
+    description: 'Enforce policies and invariants with severity levels — rules the AI must never violate.',
+  },
+  {
+    label: 'Compile',
+    description: 'Run sodl compile to validate the spec — dependency graph, interface contracts, and circular dependency checks.',
   },
   {
     label: 'Generation',
-    description: 'AI produces the right code every time — guided by structured spec, not free-form prompts.',
+    description: 'Feed the spec to Cursor, Claude, or GPT. AI produces the right code every time — no guesswork.',
   },
 ];
 
@@ -43,7 +47,7 @@ const { stages = defaultStages } = Astro.props;
         How SODL works
       </h2>
       <p class="mt-4 text-lg text-neutral-400">
-        A four-stage pipeline that transforms vague intent into precise AI generation.
+        A five-stage workflow that transforms vague intent into validated, precise AI generation.
       </p>
     </div>
 

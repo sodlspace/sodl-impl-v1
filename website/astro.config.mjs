@@ -43,14 +43,21 @@ export default defineConfig({
       sidebar: [
         { label: 'Getting Started', link: '/getting-started/' },
         { label: 'Why SODL', link: '/why-sodl/' },
+        { label: 'Use Cases', link: '/use-cases/' },
         {
           label: 'Language Reference',
-          autogenerate: { directory: 'language' },
+          items: [
+            { label: 'Overview', link: '/language/' },
+            { label: 'Syntax', link: '/language/syntax/' },
+            { label: 'Constructs', link: '/language/constructs/' },
+            { label: 'Compiler & Output', link: '/language/compiler-output/' },
+          ],
         },
         {
           label: 'Examples',
           autogenerate: { directory: 'examples' },
         },
+        { label: 'Best Practices', link: '/best-practices/' },
         { label: 'Contact', link: '/contact/' },
       ],
       components: {

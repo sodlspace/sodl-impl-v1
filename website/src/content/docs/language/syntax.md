@@ -72,15 +72,29 @@ module AuthModule:
   owns = ["Authentication logic"]
 ```
 
-## Severity modifiers
+## Policy blocks
 
-Rules accept an inline `severity` modifier:
+A `policy` groups rules under a named concern. Each rule has a `severity`:
 
 ```sodl
-rule "All API endpoints require auth" severity=high
-rule "Use semantic HTML" severity=medium
-rule "Avoid inline styles" severity=low
+policy Security:
+  rule "All API endpoints require JWT validation" severity=critical
+  rule "Rate limit authentication endpoints" severity=high
+  rule "Log all authentication attempts" severity=medium
+
+policy CodeQuality:
+  rule "All public functions have docstrings" severity=medium
+  rule "Variable names are descriptive" severity=low
 ```
+
+### Severity levels
+
+| Level | Meaning |
+|---|---|
+| `critical` | Must not be violated — blocks generation |
+| `high` | Required constraint |
+| `medium` | Strong recommendation |
+| `low` | Suggestion |
 
 ## Extends and implements
 
@@ -116,7 +130,38 @@ interface HeroComponent:
   method render(tagline: str, subtitle: str) -> str
 ```
 
-Available types: `str`, `int`, `float`, `bool`, `list`, `dict`, `any`.
+### Types
+
+**Primitive types:** `str`, `int`, `float`, `bool`, `bytes`, `UUID`, `datetime`
+
+**Generic types** — both bracket and angle-bracket syntax are accepted:
+
+```sodl
+method get_all(page: int) -> List[Post]
+method find(id: UUID) -> Optional[User]
+method get_stats() -> Result<Success, Error>
+```
+
+**API response types** (used in `endpoint` declarations):
+
+```sodl
+endpoint "GET /posts" -> List[PostCard]
+endpoint "GET /post/{id}" -> HTML
+endpoint "POST /action" -> Redirect
+endpoint "GET /stream" -> SSE
+endpoint "DELETE /item/{id}" -> Empty (204)
+```
+
+### Naming conventions
+
+| Element | Convention | Example |
+|---|---|---|
+| Systems, Templates | PascalCase string | `"MySystem"` |
+| Interfaces, Modules, Policies | PascalCase | `UserRepository` |
+| Pipelines | string | `"Production"` |
+| Steps | PascalCase | `StepName` |
+| Methods, fields | snake_case | `get_by_id` |
+| Endpoints | HTTP verb + path | `"GET /api/path"` |
 
 ## Invariants
 
@@ -126,6 +171,32 @@ Invariants are string assertions that must hold:
 invariants:
   invariant "Logo links to home /"
   invariant "All images have alt text"
+```
+
+## Pipeline output types
+
+The `output` field in a `step` block is an identifier that declares what the step produces. The conventional values are:
+
+| Value | What it produces |
+|---|---|
+| `design` | Architecture decisions, diagrams, data models |
+| `code` | Application source code |
+| `tests` | Test files and test suites |
+| `diff` | Code changes for review |
+| `docs` | Documentation files |
+
+```sodl
+pipeline "Development":
+  step Design:
+    output = design
+    require = "Define architecture and data models"
+  step Implement:
+    modules = ["AuthModule", "UserModule"]
+    output = code
+    gate = "Unit tests pass"
+  step Test:
+    output = tests
+    gate = "Coverage >= 85%"
 ```
 
 ## Artifacts
