@@ -1,0 +1,92 @@
+Business Source License 1.1
+
+Copyright (c) 2026 SODL Project License text copyright (c) 2017 MariaDB
+Corporation Ab. “Business Source License” is a trademark of MariaDB
+Corporation Ab.
+
+Licensor: SODL Project
+
+Licensed Work: SODL v0.3
+
+Change Date: 2030-02-16
+
+Change License: Apache License, Version 2.0
+
+Additional Use Grant
+
+You may use, copy, modify, create derivative works of, publicly perform,
+publicly display, and redistribute the Licensed Work for any purpose,
+including commercial purposes, provided that you do not use the Licensed
+Work in a Competitive Offering.
+
+Definitions
+
+“Competitive Offering” means a commercial product or service, offered to
+third parties, that provides functionality substantially similar to the
+core capabilities of SODL.
+
+Core capabilities of SODL include, but are not limited to:
+
+-   Developer tooling for specification or schema definition
+-   Processing, interpreting, validating, or compiling SODL
+    specifications
+-   Infrastructure, configuration, or platform definition workflows
+    enabled by SODL
+-   Hosted or managed services exposing SODL’s primary functionality
+
+A Competitive Offering includes providing the Licensed Work’s core
+functionality as a hosted, managed, or Software-as-a-Service (SaaS)
+offering to third parties.
+
+For clarity, a Competitive Offering does not include:
+
+-   Internal use within an organization
+-   Embedding SODL within a larger proprietary system where SODL is not
+    the primary commercial offering
+-   Consulting or support services related to SODL
+-   Open-source derivative works that are not offered commercially as a
+    competing product or service
+
+Terms
+
+The Licensor hereby grants you the right to copy, modify, create
+derivative works, redistribute, and make production or non-production
+use of the Licensed Work, subject to the Additional Use Grant and the
+restrictions of this License.
+
+You may not use the Licensed Work in a Competitive Offering without
+obtaining a separate commercial license from the Licensor.
+
+Effective on the Change Date, or the fourth anniversary of the first
+publicly available distribution of a specific version of the Licensed
+Work under this License, whichever comes first, the Licensor hereby
+grants you rights under the terms of the Change License, and the rights
+granted under this Business Source License terminate for that version.
+
+This License applies separately for each version of the Licensed Work.
+The Change Date may vary for each version released by the Licensor.
+
+If your use of the Licensed Work does not comply with the requirements
+currently in effect as described in this License, your rights under this
+License will terminate automatically.
+
+You must conspicuously display this License in all copies of the
+Licensed Work and in any derivative works.
+
+This License does not grant you any right in any trademark, service
+mark, trade name, or logo of the Licensor or its affiliates, except as
+expressly required for reasonable and customary use in describing the
+origin of the Licensed Work.
+
+TO THE EXTENT PERMITTED BY APPLICABLE LAW, THE LICENSED WORK IS PROVIDED
+ON AN “AS IS” BASIS. LICENSOR HEREBY DISCLAIMS ALL WARRANTIES AND
+CONDITIONS, EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT,
+AND TITLE.
+
+Commercial Licensing
+
+For use of the Licensed Work in a Competitive Offering, you must obtain
+a commercial license from the Licensor.
+
+Commercial licensing inquiries: sodl.space@gmail.com

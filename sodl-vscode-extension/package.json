@@ -20,7 +20,6 @@
     "type": "git",
     "url": "https://github.com/sodlspace/sodl-impl-v1.git"
   },
-  "icon": "images/icon.png",
   "activationEvents": [
     "onLanguage:sodl"
   ],
@@ -36,11 +35,7 @@
         "extensions": [
           ".sodl"
         ],
-        "configuration": "./language-configuration.json",
-        "icon": {
-          "light": "./images/icon.png",
-          "dark": "./images/icon.png"
-        }
+        "configuration": "./language-configuration.json"
       }
     ],
     "grammars": [
