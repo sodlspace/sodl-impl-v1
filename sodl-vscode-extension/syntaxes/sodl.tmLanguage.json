@@ -1,0 +1,104 @@
+{
+  "name": "sodl",
+  "displayName": "SODL",
+  "scopeName": "source.sodl",
+  "fileTypes": ["sodl"],
+  "aliases": ["SODL"],
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#brackets" },
+    { "include": "#keywords" },
+    { "include": "#types" },
+    { "include": "#constants" },
+    { "include": "#numbers" },
+    { "include": "#operators" },
+    { "include": "#identifiers" }
+  ],
+  "repository": {
+    "comments": {
+      "name": "comment.line.number-sign.sodl",
+      "match": "#.*$"
+    },
+    "strings": {
+      "name": "string.quoted.double.sodl",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        { "name": "constant.character.escape.sodl", "match": "\\\\." }
+      ]
+    },
+    "brackets": {
+      "patterns": [
+        {
+          "name": "punctuation.definition.array.begin.sodl",
+          "match": "\\["
+        },
+        {
+          "name": "punctuation.definition.array.end.sodl",
+          "match": "\\]"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.declaration.sodl",
+          "match": "\\b(system|template|interface|module|pipeline|step)\\b"
+        },
+        {
+          "name": "keyword.control.sodl",
+          "match": "\\b(extends|implements|exports|requires|owns|artifacts|override)\\b"
+        },
+        {
+          "name": "keyword.other.sodl",
+          "match": "\\b(config|intent|stack|policy|rule|invariants|invariant|method|doc|version|primary|outcomes|out_of_scope|gate|output|require|modules)\\b"
+        }
+      ]
+    },
+    "types": {
+      "name": "support.type.sodl",
+      "match": "\\b(str|int|float|bool|list|dict|any)\\b"
+    },
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.language.boolean.sodl",
+          "match": "\\b(true|false)\\b"
+        },
+        {
+          "name": "support.constant.severity.sodl",
+          "match": "\\b(high|medium|low)\\b"
+        },
+        {
+          "name": "keyword.other.unit.sodl",
+          "match": "severity="
+        }
+      ]
+    },
+    "numbers": {
+      "name": "constant.numeric.sodl",
+      "match": "\\b\\d+(\\.\\d+)?\\b"
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.assignment.sodl",
+          "match": "="
+        },
+        {
+          "name": "keyword.operator.return.sodl",
+          "match": "->"
+        },
+        {
+          "name": "punctuation.separator.sodl",
+          "match": ":"
+        }
+      ]
+    },
+    "identifiers": {
+      "name": "entity.name.class.sodl",
+      "match": "(?<=(?:system|template|interface|module|pipeline)\\s+)\"?[A-Za-z][A-Za-z0-9_]*\"?"
+    }
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "name": "sodl-language",
+  "displayName": "SODL Language Support",
+  "description": "Syntax highlighting for SODL (Specification Orchestration Definition Language)",
+  "version": "0.1.0",
+  "publisher": "sodlspace",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "keywords": [
+    "sodl",
+    "dsl",
+    "specification",
+    "language"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sodlspace/sodl-impl-v1.git"
+  },
+  "icon": "images/icon.png",
+  "activationEvents": [
+    "onLanguage:sodl"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "sodl",
+        "aliases": [
+          "SODL",
+          "sodl"
+        ],
+        "extensions": [
+          ".sodl"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./images/icon.png",
+          "dark": "./images/icon.png"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "sodl",
+        "scopeName": "source.sodl",
+        "path": "./syntaxes/sodl.tmLanguage.json"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/node": "^16.0.0",
+    "@types/vscode": "^1.74.0",
+    "@typescript-eslint/eslint-plugin": "^5.45.0",
+    "@typescript-eslint/parser": "^5.45.0",
+    "eslint": "^8.28.0",
+    "typescript": "^4.9.0"
+  }
+}
