@@ -1,0 +1,34 @@
+---
+// Custom Search component for Starlight header
+// This renders a search button that triggers the SearchModal
+---
+
+<button
+  type="button"
+  class="sl-search-button inline-flex items-center gap-2 rounded-lg border border-neutral-700 bg-neutral-800/50 px-3 py-1.5 text-sm text-neutral-400 hover:text-white hover:border-neutral-600 transition-colors"
+  aria-label="Open search"
+>
+  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+  </svg>
+  <span class="hidden sm:inline">Search</span>
+  <kbd class="hidden sm:inline-block rounded bg-neutral-700 px-1.5 py-0.5 text-xs font-mono">⌘K</kbd>
+</button>
+
+<script>
+  // Trigger search modal when button is clicked
+  const searchButton = document.querySelector('.sl-search-button');
+  searchButton?.addEventListener('click', () => {
+    document.dispatchEvent(new CustomEvent('open-search'));
+  });
+</script>
+
+<style>
+  .sl-search-button {
+    white-space: nowrap;
+  }
+  
+  .sl-search-button kbd {
+    font-family: monospace;
+  }
+</style>

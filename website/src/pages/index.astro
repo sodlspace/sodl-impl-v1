@@ -84,7 +84,7 @@ system "MySite" extends "AstroSiteBase":
     </style>
   </head>
 
-  <body class="landing-page bg-neutral-950 text-neutral-100 antialiased">
+  <body class="landing-page bg-neutral-950 text-neutral-100 antialiased" data-pagefind-body>
     <Navigation currentPath="/" />
 
     <main id="main-content">
@@ -99,10 +99,10 @@ system "MySite" extends "AstroSiteBase":
       />
 
       <!-- Features -->
-      <FeatureGrid />
+      <FeatureGrid data-pagefind-filter="section" />
 
       <!-- Philosophy pipeline -->
-      <PhilosophyStrip />
+      <PhilosophyStrip data-pagefind-filter="section" />
 
       <!-- Who is it for -->
       <WhoIsItFor />
