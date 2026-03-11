@@ -28,9 +28,13 @@ export default defineConfig({
       title: 'SODL',
       description:
         'Specification Orchestration Definition Language — turn AI code generation from guesswork into engineering.',
-      social: {
-        github: 'https://github.com/sodlspace/sodl-impl-v1',
-      },
+      social: [
+        {
+          icon: 'github',
+          label: 'GitHub',
+          href: 'https://github.com/sodlspace/sodl-impl-v1',
+        },
+      ],
       head: [
         {
           tag: 'meta',
@@ -39,6 +43,18 @@ export default defineConfig({
         {
           tag: 'meta',
           attrs: { name: 'twitter:card', content: 'summary_large_image' },
+        },
+        // Context7 AI Chat Widget
+        {
+          tag: 'script',
+          attrs: {
+            src: 'https://context7.com/widget.js',
+            'data-library': '/sodlspace/sodl-impl-v1',
+            'data-color': '#059669',
+            'data-position': 'bottom-right',
+            'data-placeholder': 'Ask about SODL...',
+            async: true,
+          },
         },
       ],
       sidebar: [

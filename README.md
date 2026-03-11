@@ -1,10 +1,12 @@
 # SODL
 
-**Version 0.3** - DSL for specification-driven development with AI coding agents.
+**Version 0.5** - DSL for specification-driven development with AI coding agents.
 
 ## Overview
 
-SODL is a Domain-Specific Language (DSL) that enables controlled AI-driven code generation through explicit specifications. This repository contains the complete SODL implementation including language documentation, compiler, and MCP server for AI agent integration.
+SODL is a Domain-Specific Language (DSL) that enables controlled AI-driven code generation through explicit specifications. This repository contains the complete SODL v0.5 implementation including language documentation, compiler, and MCP server for AI agent integration.
+
+SODL v0.5 introduces enhanced features including architecture patterns, dependency injection, error handling, observability, testing strategies, and security patterns.
 
 ## What is SODL?
 
@@ -14,6 +16,12 @@ SODL is indentation-based DSL for controlled AI-driven code generation. It allow
 - **Architecture**: System structure, modules, and interfaces
 - **Constraints**: Rules, invariants, and acceptance criteria
 - **Pipeline**: Controlled generation process
+- **Architecture Patterns**: Clean Architecture, Hexagonal, MVC, and more
+- **Dependency Injection**: Container configuration and lifetime rules
+- **Error Handling**: Unified error strategies with retry policies
+- **Observability**: Logging, tracing, and metrics configuration
+- **Testing Strategy**: Unit, integration, E2E, and load testing
+- **Security Patterns**: Authentication, authorization, and data protection
 
 The compiler transforms SODL files into structured prompts for AI coding agents, enabling deterministic, reviewable, and reproducible code generation.
 
@@ -30,7 +38,7 @@ Comprehensive documentation suite optimized for both humans and AI agents:
 - **spec_sample.sodl** - Working example specification
 - **library_example.sodl** - Library example specification
 - **ModernTodoApp.sodl** - Todo app example specification
-- **SODL Language Specification_v0.3.pdf** - Official specification
+- **SODL Language Specification_v0.5.pdf** - Official specification
 
 ### 2. SODL Compiler (`sodlcompiler/`)
 
@@ -99,6 +107,9 @@ See `sodl_mcp/README.md` for detailed MCP server setup and configuration.
 
 ```
 sodl-impl-v1/
+├── .sodl/                          # Specification files
+│   └── SODL_spec_05.md            # Language specification v0.5
+│
 ├── sodl/                           # Language documentation
 │   ├── SODL_DOCUMENTATION.md           # Complete guide
 │   ├── SYNTAX_REFERENCE.md             # Quick syntax reference
@@ -108,7 +119,7 @@ sodl-impl-v1/
 │   ├── spec_sample.sodl                # Working example
 │   ├── library_example.sodl            # Library example
 │   ├── ModernTodoApp.sodl              # Todo app example
-│   └── SODL Language Specification_v0.3.pdf
+│   └── SODL Language Specification_v0.5.pdf
 │
 ├── sodlcompiler/                       # Compiler implementation
 │   ├── __main__.py                     # CLI entry point
@@ -144,6 +155,7 @@ Here's a simple SODL example:
 
 ```sodl
 system "TodoApp":
+  version = "1.0.0"
   stack:
     language = "Python 3.12"
     web = "FastAPI"
@@ -151,6 +163,50 @@ system "TodoApp":
   intent:
     primary = "Task management application"
     outcomes = ["Create and manage todos", "RESTful API"]
+
+  architecture:
+    style = "Clean Architecture"
+    layers = ["Domain", "Application", "Infrastructure", "Interface"]
+
+  design_patterns:
+    - name = "Repository"
+      scope = "global"
+    - name = "Factory"
+      scope = "modules: [Notification]"
+
+  dependency_injection:
+    container = "AutoWire"
+    injection_style = "Constructor Injection"
+    lifetime_rules:
+      - service = "DatabaseConnection"
+        scope = "Singleton"
+      - service = "TodoService"
+        scope = "Transient"
+
+  error_handling:
+    strategy = "Result Pattern"
+    error_codes:
+      - code = "TODO_NOT_FOUND"
+        http_status = 404
+        user_message = "Todo not found"
+    retry_policy:
+      max_attempts = 3
+      backoff = "exponential"
+
+  observability:
+    logging:
+      format = "JSON"
+      level = "INFO"
+    tracing:
+      enabled = true
+      provider = "OpenTelemetry"
+
+  testing_strategy:
+    unit_tests:
+      framework = "pytest"
+      coverage_target = 80%
+    integration_tests:
+      framework = "pytest-bdd"
 
   interface TodoStore:
     method create(todo: TodoInput) -> Todo
@@ -167,6 +223,12 @@ system "TodoApp":
       modules = ["TodoAPI"]
       output = code
       gate = "Tests pass"
+    step ValidateArchitecture:
+      output = architecture
+      gate = "No dependency violations"
+    step GenerateTests:
+      output = tests
+      gate = "Test scaffolding complete"
 ```
 
 ## SODL Language Features
@@ -182,6 +244,15 @@ This project showcases the following SODL language constructs:
 - ✅ **invariants** - System constraints
 - ✅ **acceptance** - Testing criteria
 - ✅ **pipeline** - Controlled generation process with steps
+- ✅ **architecture** - Architectural style and layer definitions **[NEW v0.5]**
+- ✅ **design_patterns** - Design patterns (Repository, CQRS, Saga, Factory) **[NEW v0.5]**
+- ✅ **dependency_injection** - DI container configuration **[NEW v0.5]**
+- ✅ **error_handling** - Error strategies and retry policies **[NEW v0.5]**
+- ✅ **observability** - Logging, tracing, and metrics **[NEW v0.5]**
+- ✅ **testing_strategy** - Comprehensive testing definitions **[NEW v0.5]**
+- ✅ **security_patterns** - Authentication, authorization, data protection **[NEW v0.5]**
+- ✅ **ui_theme** - Reusable UI component libraries and UX rules **[ENHANCED v0.5]**
+- ✅ **bindings** - Automatic API-UI binding **[NEW v0.5]**
 
 ## Development
 
@@ -250,6 +321,15 @@ SODL enables:
 - Data processing pipelines
 - CLI applications
 - Real-time systems
+- Full-stack applications (backend + frontend)
+
+**SODL v0.5 supports:**
+- Automatic API-UI binding
+- UI theme definitions with component libraries
+- Multiple architecture patterns (Clean Architecture, Hexagonal, MVC)
+- Comprehensive testing strategies
+- Observability configuration (logging, tracing, metrics)
+- Security patterns (authentication, authorization, encryption)
 
 **Compatible with:**
 - Cursor AI editor
@@ -264,13 +344,14 @@ SODL enables:
 SODL formalizes the pipeline:
 
 ```
-Intent → Architecture → Constraints → Generation
+Intent → Architecture → Constraints → Generation → Validation
 ```
 
 - **Intent**: What must be built and why
-- **Architecture**: How components are structured
-- **Constraints**: Rules that must be enforced
+- **Architecture**: How components are structured (layers, patterns, DI)
+- **Constraints**: Rules that must be enforced (policies, security)
 - **Generation**: Deterministic, reviewable code creation
+- **Validation**: Architecture validation and test generation
 
 ## License
 
@@ -300,7 +381,7 @@ Contributions are welcome! You can:
 
 ## Learn More
 
-- Read the [SODL Language Specification PDF](sodl/SODL%20Language%20Specification_v0.3.pdf)
+- Read the [SODL Language Specification PDF](sodl/SODL%20Language%20Specification_v0.5.pdf)
 - Browse the [documentation collection](sodl/README.md)
 - Explore [example specifications](sodl/spec_sample.sodl)
 - Check out the [MCP server](sodl_mcp/README.md)
@@ -311,6 +392,6 @@ SODL demonstrates specification-driven development, where clear intent and const
 
 ---
 
-**SODL v0.3** - Explicit. Structured. AI-Ready.
+**SODL v0.5** - Explicit. Structured. AI-Ready.
 
 *"Architecture before code. Constraints before suggestions. Developer-controlled AI."*
