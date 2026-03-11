@@ -83,6 +83,24 @@ sodlcompiler examples/ModernTodoApp.sodl --show-ast
 python -m sodlcompiler.compiler --validate examples/ModernTodoApp.sodl
 ```
 
+### Programmatic Usage
+
+```python
+from sodlcompiler import SODLCompiler, compile_source
+
+# Compile source code
+compiler = SODLCompiler()
+success = compiler.compile(source_code, "app.sodl")
+
+if success:
+    ast = compiler.get_ast()
+    # Traverse and analyze AST
+else:
+    compiler.print_diagnostics()
+
+# See sodlcompiler/API_USAGE.md for complete API documentation
+```
+
 ### Setting Up the MCP Server
 
 ```bash
@@ -94,7 +112,7 @@ uv sync
 sodl-mcp
 ```
 
-See `sodl_mcp/README.md` for detailed MCP server setup and configuration.
+See `sodl_mcp/README.md` for detailed MCP server setup and configuration, including client API examples and custom prompt template extension.
 
 ## Project Structure
 
@@ -110,7 +128,8 @@ sodl-impl-v1/
 │   ├── react-demo.sodl            # React demo example
 │   ├── sodlcompiler.sodl          # SODL compiler specification
 │   ├── vst_host_plugin.sodl       # VST host plugin example
-│   └── web_ui.sodl                # Web UI example
+│   ├── web_ui.sodl                # Web UI example
+│   └── constraints_example.sodl   # Field-level constraints example [NEW]
 │
 ├── sodlcompiler/                   # Compiler implementation
 │   ├── __main__.py                 # CLI entry point
@@ -119,7 +138,8 @@ sodl-impl-v1/
 │   ├── semantic_analyzer.py        # Validation
 │   ├── ast.py                      # AST node definitions
 │   ├── compiler.py                 # Main compiler
-│   └── errors.py                   # Error handling
+│   ├── errors.py                   # Error handling
+│   └── API_USAGE.md                # Python API documentation [NEW]
 │
 ├── sodl_mcp/                       # MCP Server
 │   ├── sodl_mcp/
@@ -127,7 +147,7 @@ sodl-impl-v1/
 │   │   └── __init__.py
 │   ├── tests/                      # Test suite
 │   ├── pyproject.toml              # MCP package config
-│   ├── README.md                   # MCP server docs
+│   ├── README.md                   # MCP server docs (with client API examples)
 │   └── SETUP.md                    # Setup instructions
 │
 ├── sodl-vscode-extension/          # VSCode extension for SODL
@@ -379,8 +399,10 @@ Contributions are welcome! You can:
 
 - Read the [SODL Language Specification PDF](releases/)
 - Explore [example specifications](examples/)
-- Check out the [MCP server](sodl_mcp/README.md)
+- Read the [Compiler Python API Documentation](sodlcompiler/API_USAGE.md)
+- Check out the [MCP Server with Client API Examples](sodl_mcp/README.md)
 - View the [VSCode extension](sodl-vscode-extension/)
+- See [Field-Level Constraints Example](examples/constraints_example.sodl)
 
 ## Acknowledgments
 

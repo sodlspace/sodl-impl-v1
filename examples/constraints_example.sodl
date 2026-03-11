@@ -1,0 +1,300 @@
+# Constraints and Validation Example
+
+Demonstrates field-level constraints, module invariants, and policy rules in SODL.
+
+```sodl
+system "UserManagement":
+  version = "1.0.0"
+  stack:
+    language = "Python 3.12"
+    web = "FastAPI"
+    database = "PostgreSQL"
+
+  intent:
+    primary = "User authentication and profile management"
+    outcomes = ["User registration", "Login/logout", "Profile management", "Password recovery"]
+
+  # System-level invariants
+  invariants:
+    "All passwords must be hashed using bcrypt before storage"
+    "Email addresses must be unique across all users"
+    "Users must verify email before account activation"
+
+interface IUserService:
+  """Service interface for user management operations"""
+  
+  method create_user(email: str, password: str, name: str) -> Result[User, CreateUserError]
+  method get_user_by_id(id: str) -> Result[Optional[User], UserNotFoundError]
+  method get_user_by_email(email: str) -> Result[Optional[User], UserNotFoundError]
+  method update_user(id: str, updates: UserUpdateInput) -> Result[User, UpdateUserError]
+  method delete_user(id: str) -> Result[void, DeleteUserError]
+  method verify_email(token: str) -> Result[void, VerificationError]
+
+  # Interface-level invariants
+  invariants:
+    "All methods must validate input before processing"
+    "Errors must not leak internal implementation details"
+    "Audit logs must be created for all write operations"
+
+  # Data models with field-level constraints
+  model User:
+    id: str                    # Unique identifier (UUID format)
+    email: str                 # Valid email format, unique
+    password_hash: str         # Bcrypt hash, min 60 characters
+    name: str (min_length=1, max_length=100)
+    created_at: datetime       # ISO 8601 format
+    updated_at: datetime       # ISO 8601 format
+    is_active: bool            # Account status
+    is_verified: bool          # Email verification status
+    last_login: Optional[datetime]
+
+  model UserInput:
+    email: str (pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
+    password: str (min_length=8, max_length=128, requires_uppercase=true, requires_lowercase=true, requires_digit=true)
+    name: str (min_length=1, max_length=100)
+
+  model UserUpdateInput:
+    email: Optional[str] (pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
+    name: Optional[str] (min_length=1, max_length=100)
+    current_password: Optional[str] (min_length=8)
+    new_password: Optional[str] (min_length=8, max_length=128, requires_uppercase=true, requires_lowercase=true, requires_digit=true)
+
+  model CreateUserError:
+    code: str                  # Error code (e.g., "EMAIL_EXISTS", "INVALID_INPUT")
+    message: str               # User-friendly message
+    field: Optional[str]       # Field that caused the error
+    details: Optional[dict]    # Additional error details
+
+module UserAPI:
+  requires = [IUserService]
+  implements = [IUserService]
+  
+  # Module-level invariants
+  invariants:
+    "All API endpoints must require authentication except /register and /login"
+    "Rate limiting must be applied to all endpoints"
+    "Request and response bodies must be validated against schemas"
+    "Sensitive data must never be logged"
+
+  # Acceptance criteria with measurable gates
+  acceptance:
+    "User registration creates a new user record with hashed password"
+    "Login returns JWT token for valid credentials"
+    "Invalid email format returns 400 with field-level error"
+    "Weak password returns 400 with specific validation errors"
+    "Duplicate email returns 409 Conflict"
+    "Unauthenticated requests to protected endpoints return 401"
+    "User can update their profile with valid current password"
+    "Password change requires valid current password"
+
+  api:
+    # Public endpoints
+    endpoint "POST /api/auth/register" -> RegisterResponse
+    endpoint "POST /api/auth/login" -> LoginResponse
+    endpoint "POST /api/auth/verify-email" -> void
+    endpoint "POST /api/auth/forgot-password" -> void
+    
+    # Protected endpoints
+    endpoint "GET /api/users/me" -> UserProfileResponse
+    endpoint "PUT /api/users/me" -> UserProfileResponse
+    endpoint "DELETE /api/users/me" -> void
+    endpoint "POST /api/users/me/change-password" -> void
+    
+    # Admin endpoints
+    endpoint "GET /api/users" -> List[UserProfileResponse]
+    endpoint "GET /api/users/{id}" -> UserProfileResponse
+    endpoint "DELETE /api/users/{id}" -> void
+
+  # Configuration with constraints
+  config:
+    password:
+      min_length: 8
+      max_length: 128
+      require_uppercase: true
+      require_lowercase: true
+      require_digit: true
+      require_special: false
+      history_count: 5        # Prevent reuse of last N passwords
+      max_age_days: 90        # Password expiration
+    
+    session:
+      token_expiry_minutes: 30
+      refresh_token_expiry_days: 7
+      max_concurrent_sessions: 5
+    
+    rate_limiting:
+      login_attempts_per_hour: 5
+      registration_per_ip_per_day: 3
+      password_reset_per_hour: 3
+    
+    validation:
+      email_max_length: 255
+      name_min_length: 1
+      name_max_length: 100
+      username_pattern: "^[a-zA-Z][a-zA-Z0-9_-]{2,30}$"
+
+policy SecurityPolicy:
+  rules:
+    "All passwords must be hashed using bcrypt with cost factor >= 10" severity = "critical"
+    "JWT tokens must use RS256 algorithm with 2048-bit keys" severity = "critical"
+    "All API responses must include security headers (X-Content-Type-Options, X-Frame-Options, CSP)" severity = "high"
+    "Failed login attempts must be logged with IP and timestamp" severity = "high"
+    "Password reset tokens must expire within 1 hour" severity = "high"
+    "Database connections must use TLS 1.3" severity = "critical"
+    "PII data must be encrypted at rest using AES-256" severity = "critical"
+
+pipeline "Build":
+  step ValidateConstraints:
+    output = validation_report
+    gate = "All field constraints validated"
+    require = "No constraint violations"
+  
+  step GenerateModels:
+    modules = ["UserAPI"]
+    output = data_models
+    gate = "All models generated with validation"
+    require = "Field constraints preserved in generated code"
+  
+  step GenerateServices:
+    modules = ["UserAPI"]
+    output = service_layer
+    gate = "Service methods implement all interface contracts"
+    require = "Error handling follows Result pattern"
+  
+  step GenerateAPI:
+    modules = ["UserAPI"]
+    output = api_endpoints
+    gate = "All endpoints implemented with validation"
+    require = "Rate limiting applied to all endpoints"
+  
+  step GenerateTests:
+    output = test_suite
+    gate = "Test coverage >= 80%"
+    require = "All acceptance criteria have tests"
+  
+  step SecurityReview:
+    output = security_report
+    gate = "No critical or high severity issues"
+    require = "All policy rules satisfied"
+```
+
+## Field-Level Constraint Syntax
+
+### String Constraints
+
+```sodl
+model Example:
+  # Length constraints
+  name: str (min_length=1)
+  description: str (max_length=500)
+  content: str (min_length=10, max_length=10000)
+  
+  # Pattern constraints (regex)
+  email: str (pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
+  phone: str (pattern="^\\+?[1-9]\\d{1,14}$")  # E.164 format
+  username: str (pattern="^[a-zA-Z][a-zA-Z0-9_-]{2,30}$")
+  
+  # Combined constraints
+  password: str (min_length=8, max_length=128, pattern=".*[A-Z].*[0-9].*")
+```
+
+### Numeric Constraints
+
+```sodl
+model Product:
+  # Range constraints
+  quantity: int (min=0, max=10000)
+  price: decimal (min=0.01, max=999999.99)
+  rating: float (min=0.0, max=5.0)
+  
+  # Divisibility
+  batch_size: int (divisible_by=10)
+  
+  # Combined
+  discount_percent: decimal (min=0, max=100, precision=2)
+```
+
+### Collection Constraints
+
+```sodl
+model Order:
+  # List constraints
+  items: List[OrderItem] (min_items=1, max_items=100)
+  tags: List[str] (max_items=10, unique=true)
+  
+  # Optional with constraints
+  reviews: Optional[List[Review]] (min_items=0, max_items=1000)
+```
+
+### Boolean and Enum Constraints
+
+```sodl
+model Settings:
+  # Boolean with default
+  notifications_enabled: bool (default=true)
+  
+  # Enum-like constraints
+  status: str (enum=["pending", "active", "suspended", "deleted"])
+  role: str (enum=["user", "moderator", "admin"])
+  
+  # One-of constraint
+  priority: str (one_of=["low", "medium", "high", "critical"])
+```
+
+## Module-Level Invariants
+
+```sodl
+module PaymentModule:
+  requires = [IPaymentGateway]
+  
+  # Invariants that must hold for all operations
+  invariants:
+    "All payments must be idempotent"
+    "Refunds cannot exceed original payment amount"
+    "Payment data must never be logged in plain text"
+    "All transactions must be auditable"
+    "Currency conversion must use rates less than 5 minutes old"
+  
+  acceptance:
+    "Payment succeeds with valid card and sufficient funds"
+    "Payment fails with insufficient funds and returns specific error code"
+    "Duplicate payment requests return same result (idempotency)"
+    "Refund creates audit trail with original transaction reference"
+```
+
+## Policy Rules with Severity
+
+```sodl
+policy DataProtectionPolicy:
+  rules:
+    "All PII must be encrypted at rest using AES-256" severity = "critical"
+    "Database backups must be encrypted" severity = "critical"
+    "Access logs must be retained for minimum 1 year" severity = "high"
+    "Data exports must require manager approval" severity = "high"
+    "Test environments must use anonymized data" severity = "medium"
+    "API responses must include cache-control headers" severity = "low"
+```
+
+## Testing Field Constraints
+
+```python
+from sodlcompiler import compile_source
+
+# Compile the specification
+compiler = compile_source(sodl_code, "constraints_example.sodl")
+
+if compiler.has_errors():
+    compiler.print_diagnostics()
+else:
+    ast = compiler.get_ast()
+    
+    # Extract field constraints from models
+    for stmt in ast.statements:
+        if hasattr(stmt, 'models') and stmt.models:
+            for model in stmt.models:
+                print(f"Model: {model.name.name}")
+                for field in model.fields:
+                    if field.constraints:
+                        print(f"  Field: {field.name.name}")
+                        print(f"    Constraints: {field.constraints}")
+```
