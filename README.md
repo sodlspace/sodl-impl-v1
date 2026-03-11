@@ -27,18 +27,11 @@ The compiler transforms SODL files into structured prompts for AI coding agents,
 
 ## Project Components
 
-### 1. SODL Language Documentation (`sodl/`)
+### 1. SODL Language Documentation
 
-Comprehensive documentation suite optimized for both humans and AI agents:
-
-- **SODL_DOCUMENTATION.md** - Complete language guide (~1000 lines)
-- **SYNTAX_REFERENCE.md** - Quick syntax lookup (~600 lines)
-- **EXAMPLES_COLLECTION.md** - 17+ real-world examples (~900 lines)
-- **API_REFERENCE.md** - Complete API reference (~800 lines)
-- **spec_sample.sodl** - Working example specification
-- **library_example.sodl** - Library example specification
-- **ModernTodoApp.sodl** - Todo app example specification
-- **SODL Language Specification_v0.5.pdf** - Official specification
+- **examples/** - Example SODL specifications including ModernTodoApp, PresentationGenerator, and more
+- **releases/** - Release artifacts and documentation
+- **.sodl/SODL_spec_05.md** - Language specification markdown
 
 ### 2. SODL Compiler (`sodlcompiler/`)
 
@@ -81,13 +74,13 @@ pip install -e .
 
 ```bash
 # Compile a SODL file
-sodlcompiler sodl/spec_sample.sodl
+sodlcompiler examples/ModernTodoApp.sodl
 
 # Show AST
-sodlcompiler sodl/spec_sample.sodl --show-ast
+sodlcompiler examples/ModernTodoApp.sodl --show-ast
 
 # Validate syntax only
-python -m sodlcompiler.compiler --validate sodl/spec_sample.sodl
+python -m sodlcompiler.compiler --validate examples/ModernTodoApp.sodl
 ```
 
 ### Setting Up the MCP Server
@@ -110,43 +103,46 @@ sodl-impl-v1/
 ├── .sodl/                          # Specification files
 │   └── SODL_spec_05.md            # Language specification v0.5
 │
-├── sodl/                           # Language documentation
-│   ├── SODL_DOCUMENTATION.md           # Complete guide
-│   ├── SYNTAX_REFERENCE.md             # Quick syntax reference
-│   ├── EXAMPLES_COLLECTION.md          # 17+ examples
-│   ├── API_REFERENCE.md                # Complete API reference
-│   ├── DOCUMENTATION_INDEX.md          # Navigation guide
-│   ├── spec_sample.sodl                # Working example
-│   ├── library_example.sodl            # Library example
-│   ├── ModernTodoApp.sodl              # Todo app example
-│   └── SODL Language Specification_v0.5.pdf
+├── examples/                       # Example SODL specifications
+│   ├── ModernTodoApp.sodl         # Todo app example
+│   ├── PresentationGenerator.sodl # Presentation generator example
+│   ├── jd_matching.sodl           # JD matching example
+│   ├── react-demo.sodl            # React demo example
+│   ├── sodlcompiler.sodl          # SODL compiler specification
+│   ├── vst_host_plugin.sodl       # VST host plugin example
+│   └── web_ui.sodl                # Web UI example
 │
-├── sodlcompiler/                       # Compiler implementation
-│   ├── __main__.py                     # CLI entry point
-│   ├── lexer.py                        # Tokenization
-│   ├── parser.py                       # AST parsing
-│   ├── semantic_analyzer.py            # Validation
-│   ├── ast.py                          # AST node definitions
-│   ├── compiler.py                     # Main compiler
-│   └── errors.py                       # Error handling
+├── sodlcompiler/                   # Compiler implementation
+│   ├── __main__.py                 # CLI entry point
+│   ├── lexer.py                    # Tokenization
+│   ├── parser.py                   # AST parsing
+│   ├── semantic_analyzer.py        # Validation
+│   ├── ast.py                      # AST node definitions
+│   ├── compiler.py                 # Main compiler
+│   └── errors.py                   # Error handling
 │
 ├── sodl_mcp/                       # MCP Server
 │   ├── sodl_mcp/
-│   │   ├── server.py                   # MCP server implementation
+│   │   ├── server.py               # MCP server implementation
 │   │   └── __init__.py
-│   ├── tests/                          # Test suite
-│   │   ├── test_resources.py
-│   │   ├── test_tools.py
-│   │   └── test_integration.py
-│   ├── pyproject.toml                  # MCP package config
-│   ├── README.md                       # MCP server docs
-│   └── SETUP.md                        # Setup instructions
+│   ├── tests/                      # Test suite
+│   ├── pyproject.toml              # MCP package config
+│   ├── README.md                   # MCP server docs
+│   └── SETUP.md                    # Setup instructions
 │
-├── pyproject.toml                      # Project configuration
-├── uv.lock                             # Lock file
-├── test_compiler.py                    # Compiler tests
-├── test_example.py                     # Example tests
-└── README.md                           # This file
+├── sodl-vscode-extension/          # VSCode extension for SODL
+├── website/                        # Documentation website
+├── tests/                          # Test suite
+├── utils/                          # Utility scripts
+├── releases/                       # Release artifacts
+├── .github/                        # GitHub workflows and templates
+├── .agents/                        # AI agent configurations
+│
+├── pyproject.toml                  # Project configuration
+├── uv.lock                         # Lock file
+├── context7.json                   # Context7 configuration
+├── LICENSE                         # License file
+└── README.md                       # This file
 ```
 
 ## Example SODL
@@ -381,10 +377,10 @@ Contributions are welcome! You can:
 
 ## Learn More
 
-- Read the [SODL Language Specification PDF](sodl/SODL%20Language%20Specification_v0.5.pdf)
-- Browse the [documentation collection](sodl/README.md)
-- Explore [example specifications](sodl/spec_sample.sodl)
+- Read the [SODL Language Specification PDF](releases/)
+- Explore [example specifications](examples/)
 - Check out the [MCP server](sodl_mcp/README.md)
+- View the [VSCode extension](sodl-vscode-extension/)
 
 ## Acknowledgments
 
