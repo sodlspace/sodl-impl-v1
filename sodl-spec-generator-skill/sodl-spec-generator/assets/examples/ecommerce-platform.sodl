@@ -1,0 +1,492 @@
+# E-Commerce Platform Template
+
+A comprehensive e-commerce platform with product catalog, shopping cart, order management, and payment processing.
+
+```sodl
+system "ECommercePlatform":
+  version = "1.0.0"
+  
+  stack:
+    language = "Python 3.12"
+    web = "FastAPI"
+    database = "PostgreSQL"
+    orm = "SQLAlchemy"
+    cache = "Redis"
+    message_queue = "RabbitMQ"
+    payment_gateway = "Stripe"
+    search = "Elasticsearch"
+    testing = ["pytest", "pytest-asyncio", "pytest-mock", "locust"]
+  
+  intent:
+    primary = "Full-featured e-commerce platform with product catalog, shopping cart, order management, and payment processing"
+    outcomes = [
+      "Product catalog with categories and search",
+      "Shopping cart management",
+      "Order processing and fulfillment",
+      "Payment integration with Stripe",
+      "User accounts and order history",
+      "Inventory management",
+      "Email notifications",
+      "Admin dashboard"
+    ]
+    out_of_scope = [
+      "Multi-vendor marketplace",
+      "Subscription billing",
+      "International shipping",
+      "Mobile apps"
+    ]
+  
+  architecture:
+    style = "Clean Architecture"
+    layers = ["Domain", "Application", "Infrastructure", "Interface"]
+  
+  design_patterns:
+    - name = "Repository"
+      scope = "global"
+    - name = "Unit of Work"
+      scope = "global"
+    - name = "Saga"
+      scope = "modules: [OrderProcessing]"
+    - name = "Specification"
+      scope = "modules: [ProductCatalog]"
+  
+  dependency_injection:
+    container = "AutoWire"
+    injection_style = "Constructor Injection"
+    lifetime_rules:
+      - service = "DatabaseConnection"
+        scope = "Singleton"
+      - service = "UnitOfWork"
+        scope = "Scoped"
+      - service = "ProductService"
+        scope = "Transient"
+      - service = "OrderService"
+        scope = "Transient"
+      - service = "PaymentGateway"
+        scope = "Singleton"
+  
+  error_handling:
+    strategy = "Result Pattern"
+    error_codes:
+      - code = "PRODUCT_NOT_FOUND"
+        http_status = 404
+        user_message = "Product not found"
+      - code = "OUT_OF_STOCK"
+        http_status = 409
+        user_message = "Product is out of stock"
+      - code = "CART_NOT_FOUND"
+        http_status = 404
+        user_message = "Shopping cart not found"
+      - code = "ORDER_NOT_FOUND"
+        http_status = 404
+        user_message = "Order not found"
+      - code = "PAYMENT_FAILED"
+        http_status = 402
+        user_message = "Payment failed"
+      - code = "INVALID_ADDRESS"
+        http_status = 400
+        user_message = "Invalid shipping address"
+    retry_policy:
+      max_attempts = 3
+      backoff = "exponential"
+      timeout_ms = 10000
+    circuit_breaker:
+      enabled = true
+      failure_threshold = 5
+      recovery_timeout_ms = 30000
+  
+  observability:
+    logging:
+      format = "JSON"
+      level = "INFO"
+      correlation_id = true
+    tracing:
+      enabled = true
+      provider = "OpenTelemetry"
+      sampling_rate = 0.1
+    metrics:
+      enabled = true
+      provider = "Prometheus"
+      custom_metrics:
+        - name = "orders_total"
+          type = "counter"
+        - name = "order_value"
+          type = "histogram"
+        - name = "cart_abandonment_rate"
+          type = "gauge"
+    health_checks:
+      - name = "database"
+        endpoint = "/health/db"
+      - name = "cache"
+        endpoint = "/health/cache"
+      - name = "payment_gateway"
+        endpoint = "/health/payment"
+  
+  testing_strategy:
+    unit_tests:
+      framework = "pytest"
+      coverage_target = 85%
+    integration_tests:
+      framework = "pytest-asyncio"
+      testcontainers = true
+    e2e_tests:
+      framework = "playwright"
+      scenarios = ["checkout_flow", "user_registration", "product_search"]
+    load_tests:
+      framework = "locust"
+      target_rps = 500
+      peak_rps = 2000
+  
+  security_patterns:
+    authentication = "JWT"
+    authorization = "RBAC"
+    roles = ["customer", "admin", "support"]
+    data_protection:
+      encryption_at_rest = "AES-256"
+      encryption_in_transit = "TLS 1.3"
+      pci_compliance = true
+    payment_security:
+      tokenization = true
+      cvv_storage = "prohibited"
+      card_number_masking = true
+  
+  # Domain Interfaces
+  interface IProductRepository:
+    doc = "Product catalog data access"
+    method get_by_id(id: str) -> Optional[Product]
+    method get_all(page: int, limit: int) -> List[Product]
+    method search(query: str, filters: ProductFilters) -> List[Product]
+    method get_by_category(category_id: str) -> List[Product]
+    method check_stock(sku: str) -> int
+    invariants:
+      invariant "Products are cached for 5 minutes"
+      invariant "Search results paginated"
+  
+  interface IOrderRepository:
+    doc = "Order data access"
+    method create(order: Order) -> Order
+    method get_by_id(id: str) -> Optional[Order]
+    method get_by_user_id(user_id: str) -> List[Order]
+    method update_status(id: str, status: OrderStatus) -> Order
+    invariants:
+      invariant "Orders are immutable after creation"
+      invariant "Status changes are audited"
+  
+  interface IPaymentGateway:
+    doc = "Payment processing"
+    method charge(amount: Decimal, currency: str, token: str) -> PaymentResult
+    method refund(payment_id: str, amount: Optional[Decimal]) -> RefundResult
+    method verify_payment(payment_id: str) -> PaymentStatus
+    invariants:
+      invariant "All payments are idempotent"
+      invariant "Card data never logged"
+  
+  interface IInventoryService:
+    doc = "Inventory management"
+    method reserve_stock(sku: str, quantity: int) -> bool
+    method release_stock(sku: str, quantity: int) -> bool
+    method confirm_stock(sku: str, quantity: int) -> bool
+    method get_available_stock(sku: str) -> int
+    invariants:
+      invariant "Stock never goes negative"
+      invariant "Reservations expire after 15 minutes"
+  
+  # Product Catalog Module
+  module ProductCatalog:
+    implements = [IProductRepository]
+    exports = [IProductRepository]
+    requires = []
+    owns = ["Product management", "Category management", "Product search"]
+    
+    api:
+      model Product:
+        field id: str
+        field name: str (min_length=1, max_length=200)
+        field description: str (max_length=5000)
+        field price: Decimal (min=0.01, precision=2)
+        field currency: str (enum=["USD", "EUR", "GBP"], default="USD")
+        field sku: str (pattern="^[A-Z0-9-]+$")
+        field stock_quantity: int (min=0)
+        field category_id: str
+        field images: List[str]
+        field created_at: datetime
+        field updated_at: datetime
+      
+      model ProductFilters:
+        field category_id: Optional[str]
+        field min_price: Optional[Decimal]
+        field max_price: Optional[Decimal]
+        field in_stock: Optional[bool]
+        field sort_by: str (enum=["name", "price", "created_at"], default="created_at")
+        field sort_order: str (enum=["asc", "desc"], default="desc")
+      
+      endpoint "GET /api/products" -> List[ProductResponse]
+      endpoint "GET /api/products/{id}" -> ProductResponse
+      endpoint "GET /api/categories" -> List[CategoryResponse]
+      endpoint "GET /api/categories/{id}/products" -> List[ProductResponse]
+      endpoint "GET /api/search" -> List[ProductResponse]
+    
+    invariants:
+      invariant "Product prices are positive"
+      invariant "SKU is unique"
+      invariant "Search queries sanitized"
+    
+    acceptance:
+      test "returns product by ID"
+      test "returns 404 for non-existent product"
+      test "search returns matching products"
+      test "filters products by category"
+      test "paginates results correctly"
+    
+    artifacts = [
+      "app/modules/product/models.py",
+      "app/modules/product/repository.py",
+      "app/modules/product/service.py",
+      "app/modules/product/routes.py",
+      "app/modules/product/schemas.py"
+    ]
+  
+  # Shopping Cart Module
+  module ShoppingCart:
+    requires = [IProductRepository, IInventoryService]
+    owns = ["Cart management", "Cart items", "Price calculations"]
+    
+    api:
+      model Cart:
+        field id: str
+        field user_id: Optional[str]
+        field items: List[CartItem]
+        field total: Decimal
+        field created_at: datetime
+        field updated_at: datetime
+      
+      model CartItem:
+        field product_id: str
+        field quantity: int (min=1, max=99)
+        field unit_price: Decimal
+        field subtotal: Decimal
+      
+      endpoint "GET /api/cart" -> CartResponse
+      endpoint "POST /api/cart/items" -> CartResponse
+      endpoint "PUT /api/cart/items/{product_id}" -> CartResponse
+      endpoint "DELETE /api/cart/items/{product_id}" -> CartResponse
+      endpoint "POST /api/cart/clear" -> Empty
+    
+    invariants:
+      invariant "Cart items quantity > 0"
+      invariant "Cart total calculated correctly"
+      invariant "Out of stock items flagged"
+    
+    acceptance:
+      test "adds item to cart"
+      test "updates item quantity"
+      test "removes item from cart"
+      test "calculates total correctly"
+      test "prevents adding out of stock items"
+    
+    artifacts = [
+      "app/modules/cart/models.py",
+      "app/modules/cart/service.py",
+      "app/modules/cart/routes.py",
+      "app/modules/cart/schemas.py"
+    ]
+  
+  # Order Processing Module
+  module OrderProcessing:
+    implements = [IOrderRepository]
+    exports = [IOrderRepository]
+    requires = [IProductRepository, IInventoryService, IPaymentGateway]
+    owns = ["Order creation", "Order fulfillment", "Order status tracking"]
+    
+    design_patterns:
+      - name = "Saga"
+        type = "Orchestration"
+        steps = ["ReserveStock", "ChargePayment", "CreateOrder", "ConfirmStock"]
+        compensating_transactions = true
+    
+    api:
+      model Order:
+        field id: str
+        field user_id: str
+        field items: List[OrderItem]
+        field subtotal: Decimal
+        field tax: Decimal
+        field shipping: Decimal
+        field total: Decimal
+        field status: str (enum=["pending", "paid", "shipped", "delivered", "cancelled"])
+        field shipping_address: Address
+        field created_at: datetime
+      
+      model OrderItem:
+        field product_id: str
+        field quantity: int
+        field unit_price: Decimal
+        field subtotal: Decimal
+      
+      model Address:
+        field street: str (min_length=1, max_length=200)
+        field city: str (min_length=1, max_length=100)
+        field state: str (min_length=2, max_length=100)
+        field postal_code: str (pattern="^\\d{5}(-\\d{4})?$")
+        field country: str (enum=["US", "CA", "UK"], default="US")
+      
+      endpoint "POST /api/orders" -> OrderResponse (201)
+      endpoint "GET /api/orders/{id}" -> OrderResponse
+      endpoint "GET /api/orders" -> List[OrderResponse]
+      endpoint "POST /api/orders/{id}/cancel" -> OrderResponse
+    
+    invariants:
+      invariant "Orders immutable after creation"
+      invariant "Stock reserved before payment"
+      invariant "Payment charged before confirmation"
+      invariant "Cancelled orders release stock"
+    
+    acceptance:
+      test "creates order from cart"
+      test "reserves stock successfully"
+      test "charges payment correctly"
+      test "sends order confirmation"
+      test "cancels order and releases stock"
+      test "handles payment failure with compensation"
+    
+    artifacts = [
+      "app/modules/order/models.py",
+      "app/modules/order/repository.py",
+      "app/modules/order/service.py",
+      "app/modules/order/routes.py",
+      "app/modules/order/schemas.py",
+      "app/modules/order/saga.py"
+    ]
+  
+  # Payment Module
+  module PaymentProcessing:
+    implements = [IPaymentGateway]
+    exports = [IPaymentGateway]
+    requires = []
+    owns = ["Payment processing", "Refunds", "Payment history"]
+    
+    api:
+      model Payment:
+        field id: str
+        field order_id: str
+        field amount: Decimal
+        field currency: str
+        field status: str (enum=["pending", "succeeded", "failed", "refunded"])
+        field payment_method: str
+        field created_at: datetime
+      
+      endpoint "POST /api/payments" -> PaymentResponse
+      endpoint "GET /api/payments/{id}" -> PaymentResponse
+      endpoint "POST /api/payments/{id}/refund" -> RefundResponse
+    
+    invariants:
+      invariant "All payments idempotent"
+      invariant "Card data never stored"
+      invariant "PCI DSS compliant"
+    
+    acceptance:
+      test "processes payment successfully"
+      test "handles declined cards"
+      test "processes refunds"
+      test "prevents duplicate charges"
+    
+    artifacts = [
+      "app/modules/payment/service.py",
+      "app/modules/payment/routes.py",
+      "app/modules/payment/schemas.py",
+      "app/modules/payment/gateway.py"
+    ]
+  
+  # User Module
+  module UserManagement:
+    requires = []
+    owns = ["User registration", "Authentication", "Profile management", "Order history"]
+    
+    api:
+      endpoint "POST /api/auth/register" -> AuthResponse
+      endpoint "POST /api/auth/login" -> AuthResponse
+      endpoint "GET /api/users/me" -> UserProfileResponse
+      endpoint "PUT /api/users/me" -> UserProfileResponse
+      endpoint "GET /api/users/me/orders" -> List[OrderResponse]
+    
+    invariants:
+      invariant "Passwords hashed with bcrypt"
+      invariant "Emails unique"
+      invariant "JWT tokens signed with RS256"
+    
+    artifacts = [
+      "app/modules/user/service.py",
+      "app/modules/user/routes.py",
+      "app/modules/user/schemas.py"
+    ]
+  
+  # Email Notification Module
+  module EmailNotifications:
+    owns = ["Order confirmations", "Shipping notifications", "Password reset"]
+    
+    invariants:
+      invariant "Emails queued asynchronously"
+      invariant "Failed emails retried 3 times"
+    
+    artifacts = [
+      "app/modules/email/service.py",
+      "app/modules/email/templates/"
+    ]
+  
+  policy SecurityPolicy:
+    rules:
+      "All passwords must be hashed using bcrypt with cost factor >= 10" severity = "critical"
+      "Payment card data must never be stored" severity = "critical"
+      "All API responses must include security headers" severity = "high"
+      "PCI DSS compliance required for payment processing" severity = "critical"
+      "User data must be encrypted at rest" severity = "critical"
+      "Rate limiting on all auth endpoints" severity = "high"
+  
+  policy PerformancePolicy:
+    rules:
+      "Product search must complete within 200ms" severity = "high"
+      "Cart operations must complete within 100ms" severity = "high"
+      "Homepage must load within 1 second" severity = "medium"
+      "Cache hit ratio must be above 80%" severity = "medium"
+  
+  pipeline "Development":
+    step ImplementDomain:
+      modules = ["ProductCatalog", "ShoppingCart", "OrderProcessing"]
+      output = code
+      require = "Define domain models and business logic"
+      gate = "Domain tests pass"
+    
+    step ImplementInfrastructure:
+      modules = ["PaymentProcessing", "EmailNotifications"]
+      output = code
+      require = "Implement external integrations"
+      gate = "Integration tests pass"
+    
+    step ImplementUserModule:
+      modules = ["UserManagement"]
+      output = code
+      gate = "Auth tests pass"
+    
+    step ImplementAPI:
+      modules = ["ProductCatalog", "ShoppingCart", "OrderProcessing"]
+      output = code
+      gate = "API tests pass"
+    
+    step ImplementSaga:
+      modules = ["OrderProcessing"]
+      output = code
+      require = "Implement order processing saga with compensation"
+      gate = "Saga tests pass"
+    
+    step IntegrationTests:
+      output = test_results
+      gate = "All integration tests pass"
+    
+    step LoadTests:
+      output = load_report
+      gate = "Performance targets met"
+    
+    step SecurityReview:
+      output = security_report
+      gate = "No critical or high severity issues"
+```
