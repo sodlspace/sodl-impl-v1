@@ -4,13 +4,11 @@
 
 ## Overview
 
-SODL is a Domain-Specific Language (DSL) that enables controlled AI-driven code generation through explicit specifications. This repository contains the complete SODL v0.5 implementation including language documentation, compiler, and MCP server for AI agent integration.
-
-SODL v0.5 introduces enhanced features including architecture patterns, dependency injection, error handling, observability, testing strategies, and security patterns.
+SODL is a Domain-Specific Language (DSL) that enables controlled AI-driven code generation through explicit specifications. This repository contains the SODL v0.5 specification, example specifications, documentation website, and the SODL Specification Generator skill for AI agents.
 
 ## What is SODL?
 
-SODL is indentation-based DSL for controlled AI-driven code generation. It allows developers to describe:
+SODL is an indentation-based DSL for controlled AI-driven code generation. It allows developers to describe:
 
 - **Intent**: What must be built and why
 - **Architecture**: System structure, modules, and interfaces
@@ -27,92 +25,61 @@ The compiler transforms SODL files into structured prompts for AI coding agents,
 
 ## Project Components
 
-### 1. SODL Language Documentation
+### 1. SODL Language Specification
 
 - **examples/** - Example SODL specifications including ModernTodoApp, PresentationGenerator, and more
-- **releases/** - Release artifacts and documentation
 - **.sodl/SODL_spec_05.md** - Language specification markdown
+- **releases/** - Release artifacts and documentation (coming soon)
 
-### 2. SODL Compiler (`sodlcompiler/`)
+### 2. SODL Specification Generator Skill (`sodl-spec-generator-skill/`)
 
-A Python-based compiler for SODL files with:
+AI agent skill for generating production-ready SODL specifications with:
+- Architecture patterns (Clean Architecture, Hexagonal, CQRS)
+- Dependency injection configuration
+- Error handling strategies
+- Observability setup
+- Testing strategies
+- Security patterns
+- Template generation utilities
+- Validation scripts
 
-- Lexical analysis (tokenization)
-- Syntax parsing (AST generation)
-- Semantic analysis (validation)
-- Detailed error reporting with line numbers
-- AST inspection capabilities
+### 3. Documentation Website (`website/`)
 
-### 3. SODL MCP Server (`sodl_mcp/`)
-
-Model Context Protocol server providing AI agents with:
-
-- Access to all documentation as MCP resources
-- Real-time compilation and validation tools
-- AST analysis capabilities
-- Syntax validation
-- Prompt templates for common tasks
+Astro-based documentation website showcasing SODL specifications.
 
 ## Quick Start
 
-### Prerequisites
-
-- Python 3.12 or higher
-- uv package manager (recommended) or pip
-
-### Installation
+### Using the Specification Generator Skill
 
 ```bash
-# Install compiler dependencies
-uv sync
+# Copy skill to your AI agent's skills directory
+cp -r sodl-spec-generator-skill ~/.qwen/skills/sodl-spec-generator
 
-# Or using pip
-pip install -e .
+# Or on Windows
+xcopy /E /I sodl-spec-generator-skill %USERPROFILE%\.qwen\skills\sodl-spec-generator
 ```
 
-### Using the Compiler
+### Generate a SODL Specification
+
+Once the skill is installed, ask your AI agent:
+
+```
+Create a SODL specification for a task management API with JWT authentication
+```
+
+```
+Generate a production-ready SODL file for an e-commerce microservice with CQRS
+```
+
+### Using the Validation Script
 
 ```bash
-# Compile a SODL file
-sodlcompiler examples/ModernTodoApp.sodl
+# Validate a SODL specification
+python sodl-spec-generator-skill/sodl-spec-generator/scripts/sodl_validator.py validate spec.sodl
 
-# Show AST
-sodlcompiler examples/ModernTodoApp.sodl --show-ast
-
-# Validate syntax only
-python -m sodlcompiler.compiler --validate examples/ModernTodoApp.sodl
+# Generate a template
+python sodl-spec-generator-skill/sodl-spec-generator/scripts/sodl_validator.py generate crud output.sodl
 ```
-
-### Programmatic Usage
-
-```python
-from sodlcompiler import SODLCompiler, compile_source
-
-# Compile source code
-compiler = SODLCompiler()
-success = compiler.compile(source_code, "app.sodl")
-
-if success:
-    ast = compiler.get_ast()
-    # Traverse and analyze AST
-else:
-    compiler.print_diagnostics()
-
-# See sodlcompiler/API_USAGE.md for complete API documentation
-```
-
-### Setting Up the MCP Server
-
-```bash
-# Install MCP server
-cd sodl_mcp
-uv sync
-
-# Run the server
-sodl-mcp
-```
-
-See `sodl_mcp/README.md` for detailed MCP server setup and configuration, including client API examples and custom prompt template extension.
 
 ## Project Structure
 
@@ -129,37 +96,24 @@ sodl-impl-v1/
 │   ├── sodlcompiler.sodl          # SODL compiler specification
 │   ├── vst_host_plugin.sodl       # VST host plugin example
 │   ├── web_ui.sodl                # Web UI example
-│   └── constraints_example.sodl   # Field-level constraints example [NEW]
+│   └── constraints_example.sodl   # Field-level constraints example
 │
-├── sodlcompiler/                   # Compiler implementation
-│   ├── __main__.py                 # CLI entry point
-│   ├── lexer.py                    # Tokenization
-│   ├── parser.py                   # AST parsing
-│   ├── semantic_analyzer.py        # Validation
-│   ├── ast.py                      # AST node definitions
-│   ├── compiler.py                 # Main compiler
-│   ├── errors.py                   # Error handling
-│   └── API_USAGE.md                # Python API documentation [NEW]
+├── sodl-spec-generator-skill/     # AI agent skill for SODL generation
+│   └── sodl-spec-generator/
+│       ├── SKILL.md               # Main skill instructions
+│       ├── README.md              # Skill documentation
+│       ├── references/
+│       │   └── sodl-quick-reference.md
+│       ├── scripts/
+│       │   └── sodl_validator.py  # Validation utilities
+│       └── assets/
+│           └── examples/
+│               └── ecommerce-platform.sodl
 │
-├── sodl_mcp/                       # MCP Server
-│   ├── sodl_mcp/
-│   │   ├── server.py               # MCP server implementation
-│   │   └── __init__.py
-│   ├── tests/                      # Test suite
-│   ├── pyproject.toml              # MCP package config
-│   ├── README.md                   # MCP server docs (with client API examples)
-│   └── SETUP.md                    # Setup instructions
-│
-├── sodl-vscode-extension/          # VSCode extension for SODL
-├── website/                        # Documentation website
-├── tests/                          # Test suite
-├── utils/                          # Utility scripts
+├── website/                        # Documentation website (Astro)
 ├── releases/                       # Release artifacts
 ├── .github/                        # GitHub workflows and templates
-├── .agents/                        # AI agent configurations
 │
-├── pyproject.toml                  # Project configuration
-├── uv.lock                         # Lock file
 ├── context7.json                   # Context7 configuration
 ├── LICENSE                         # License file
 └── README.md                       # This file
@@ -260,60 +214,58 @@ This project showcases the following SODL language constructs:
 - ✅ **invariants** - System constraints
 - ✅ **acceptance** - Testing criteria
 - ✅ **pipeline** - Controlled generation process with steps
-- ✅ **architecture** - Architectural style and layer definitions **[NEW v0.5]**
-- ✅ **design_patterns** - Design patterns (Repository, CQRS, Saga, Factory) **[NEW v0.5]**
-- ✅ **dependency_injection** - DI container configuration **[NEW v0.5]**
-- ✅ **error_handling** - Error strategies and retry policies **[NEW v0.5]**
-- ✅ **observability** - Logging, tracing, and metrics **[NEW v0.5]**
-- ✅ **testing_strategy** - Comprehensive testing definitions **[NEW v0.5]**
-- ✅ **security_patterns** - Authentication, authorization, data protection **[NEW v0.5]**
-- ✅ **ui_theme** - Reusable UI component libraries and UX rules **[ENHANCED v0.5]**
-- ✅ **bindings** - Automatic API-UI binding **[NEW v0.5]**
+- ✅ **architecture** - Architectural style and layer definitions **[v0.5]**
+- ✅ **design_patterns** - Design patterns (Repository, CQRS, Saga, Factory) **[v0.5]**
+- ✅ **dependency_injection** - DI container configuration **[v0.5]**
+- ✅ **error_handling** - Error strategies and retry policies **[v0.5]**
+- ✅ **observability** - Logging, tracing, and metrics **[v0.5]**
+- ✅ **testing_strategy** - Comprehensive testing definitions **[v0.5]**
+- ✅ **security_patterns** - Authentication, authorization, data protection **[v0.5]**
+- ✅ **ui_theme** - Reusable UI component libraries and UX rules **[v0.5]**
+- ✅ **bindings** - Automatic API-UI binding **[v0.5]**
 
-## Development
+## Using the Specification Generator Skill
 
-### Running Compiler Tests
+### Installation
 
 ```bash
-# Run all tests
-pytest
-
-# Run with verbose output
-pytest -v
-
-# Run specific test
-pytest test_compiler.py
+# Copy to AI agent skills directory
+cp -r sodl-spec-generator-skill ~/.qwen/skills/sodl-spec-generator
 ```
 
-### Testing the Compiler
+### Features
 
-```bash
-# Test compilation
-python test_compiler.py
+The skill provides:
 
-# Test on examples
-python test_example.py
+1. **Production-Ready Specification Generation**
+   - Architecture patterns selection
+   - Dependency injection setup
+   - Error handling strategies
+   - Observability configuration
+   - Testing strategy definitions
+   - Security pattern implementation
 
-# Debug lexer
-python debug_lexer.py
+2. **Template Generation**
+   ```bash
+   python scripts/sodl_validator.py generate crud output.sodl
+   python scripts/sodl_validator.py generate microservice output.sodl
+   python scripts/sodl_validator.py generate rest-api output.sodl
+   python scripts/sodl_validator.py generate fullstack output.sodl
+   ```
 
-# Debug tokens
-python debug_tokens.py
+3. **Validation**
+   ```bash
+   python scripts/sodl_validator.py validate spec.sodl
+   python scripts/sodl_validator.py check-production spec.sodl
+   ```
+
+### Example Prompts
+
 ```
-
-### Working on the MCP Server
-
-```bash
-cd sodl_mcp
-
-# Install dependencies
-uv sync
-
-# Run tests
-pytest
-
-# Run server
-sodl-mcp
+Create a SODL specification for a task management API with JWT authentication
+Generate a production-ready SODL file for an e-commerce microservice with CQRS
+Convert this requirements document into a SODL specification
+Create a SODL template for a CRUD application with Clean Architecture
 ```
 
 ## Use Cases
@@ -323,7 +275,7 @@ SODL enables:
 - 📝 **Writing Specifications** - Clear, structured specifications for AI code generation
 - 🤖 **AI-Driven Development** - Controlled code generation with explicit constraints
 - 🔍 **Semantic Search** - Build searchable knowledge bases over specifications
-- 🛠️ **Tool Development** - Create compilers, linters, and IDE integrations
+- 🛠️ **Tool Development** - Create linters and IDE integrations
 - 📚 **Documentation** - Self-documenting system architectures
 - 🎓 **Teaching** - Structured approach to system design
 
@@ -389,19 +341,18 @@ For commercial licensing (competitive offerings), contact: sodl.space@gmail.com
 Contributions are welcome! You can:
 
 - Extend the SODL language specification
-- Improve the compiler implementation
+- Improve the specification generator skill
 - Add new documentation examples
-- Enhance the MCP server capabilities
+- Enhance the validation utilities
 - Create IDE integrations
 - Write tutorials and guides
 
 ## Learn More
 
-- Read the [SODL Language Specification PDF](releases/)
+- Read the [SODL Language Specification](.sodl/SODL_spec_05.md)
 - Explore [example specifications](examples/)
-- Read the [Compiler Python API Documentation](sodlcompiler/API_USAGE.md)
-- Check out the [MCP Server with Client API Examples](sodl_mcp/README.md)
-- View the [VSCode extension](sodl-vscode-extension/)
+- Check out the [SODL Specification Generator Skill](sodl-spec-generator-skill/)
+- View the [Documentation Website](website/)
 - See [Field-Level Constraints Example](examples/constraints_example.sodl)
 
 ## Acknowledgments
